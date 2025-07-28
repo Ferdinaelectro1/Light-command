@@ -1,5 +1,5 @@
 #pragma once
-
+#include <string>
 struct Time
 {
     long heure;
@@ -45,4 +45,15 @@ TimeConfig convertToTimeConfig(const String &str)
 }
 
 
+
+
+void timeInit(Time *t, DS3231& rtc) {
+  // Extraire les heures, minutes et secondes
+  int heure = atoi(strtok((char*)t, ":"));
+  int minute = atoi(strtok(NULL, ":"));
+  int seconde = atoi(strtok(NULL, ":"));
+
+  // Date fixe (exemple : 2025-07-27)
+  rtc.adjust(DateTime(2025, 7, 27, heure, minute, seconde));
+}
 
