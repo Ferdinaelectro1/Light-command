@@ -47,7 +47,11 @@ namespace gsm
         http.get(url);
 
         int statusCode = http.responseStatusCode();
-        String response = http.responseBody();
+        String response;
+        if(statusCode == 200)
+            response = http.responseBody();
+        else 
+            Serial.println("Erreur lors de la requête");
 
 /*         Serial.print("Code HTTP: ");
         Serial.println(statusCode);
@@ -66,6 +70,7 @@ namespace gsm
 
         //Ce bloc sert à extraire l'heure de la chaine de caractère envoyé par l'api.
         String data = doc["formatted"];
+        String date = data.substring(0,10);
         data = data.substring(11,19);
         String para;
         String dataLists[3];
@@ -83,8 +88,9 @@ namespace gsm
             else
               para += data[i];
         }
-        now = {dataLists[0].toInt(),dataLists[1].toInt(),dataLists[2].toInt(),true};
-        //Serial.println(data);
+
+        now = Time{date.substring(0,4).toInt(),date.substring(5,7).toInt(),date.substring(8,10).toInt(),dataLists[0].toInt(),dataLists[1].toInt(),dataLists[2].toInt(),true};
+        Serial.println(date.substring(8,9));
         return now;
     }
 

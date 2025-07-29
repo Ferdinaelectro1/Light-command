@@ -24,6 +24,12 @@ TimeConfig config ;
 
 void printTime(const Time &t)
 {
+    Serial.print(t.jour);
+    Serial.print("-");
+    Serial.print(t.mois);
+    Serial.print("-");
+    Serial.print(t.annee);
+    Serial.print(" ");
     Serial.print(t.heure);
     Serial.print(" h ");
     Serial.print(t.minute);
