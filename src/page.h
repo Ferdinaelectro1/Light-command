@@ -247,8 +247,7 @@ const char code[] PROGMEM = R"rawliteral(
             <h2>Commande de la lampe</h2>
             <article>
                 <p>État de la lampe : <span id="etat_lampe"><strong>Éteinte</strong></span></p>
-                <button id="on_lampe">Allumer</button>
-                <button id="off_lampe" >Éteindre</button>
+                <button id="off_lampe"  onclick="envoyerEtat('/commands')">Éteindre</button>
             </article>
         </section>
     </main>
@@ -260,6 +259,7 @@ const char code[] PROGMEM = R"rawliteral(
 let minuteEl = document.getElementById('minute');
 let secondeEl = document.getElementById('seconde');
 const url_time = "/time";
+let ledState = false;
 // ==== GESTION DE L'AFFICHAGE DE L'HEURE ====
 // Fonction pour recevoir le temps du module RTC 
 async function getTime(url) {
@@ -269,7 +269,7 @@ async function getTime(url) {
             throw new Error (`Erreur lors de la récupération du temps : ${response.status}`);
         }
         const data  = await response.json();
-        console.log(data);
+        //console.log(data);
         if (data) return data;
     } catch (err) {
         console.log("Erreur : ",err.message)
@@ -284,6 +284,7 @@ async function displayTime(data) {
             let heure = dataObject.heure < 10 ? "0" + dataObject.heure : dataObject.heure;
             let minute = dataObject.minute < 10 ? "0" + dataObject.minute : dataObject.minute;
             let seconde = dataObject.seconde < 10 ? "0" + dataObject.seconde : dataObject.seconde;
+            document.getElementById("off_lampe").innerText = dataObject.ledState ? "Eteindre" : "Allumer";
             // Injection des données 
             minuteEl.textContent = minute || "00";
             heureEl.textContent = heure || "00";
@@ -299,7 +300,30 @@ setInterval(() => {
 },1000);
 
 // ==== Fin de la section d'affichage du temps ====
-</script>
+
+    function envoyerEtat(url) {
+        console.log("passé");
+        fetch(url, {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ etat: !ledState })
+        })
+        .then(response => {
+            if (!response.ok) {
+            throw new Error("Erreur HTTP: " + response.status);
+            }
+            return response.json(); // ou response.text() selon la réponse attendue
+        })
+        .then(data => {
+            console.log("Réponse reçue :", data);
+        })
+        .catch(error => {
+            console.error("Erreur lors de l'envoi :", error);
+        });
+        }
+    </script>
 <script>
     
 let on_heure = document.getElementById('on_heure');

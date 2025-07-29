@@ -12,6 +12,7 @@
 
 #define INTERVALLE 1000
 #define LAMP_PIN 16
+#define SWITCH_PIN 2
 
 const char *ssid = "esp8266 wifi";
 const char *password = "isniis";
@@ -21,6 +22,7 @@ unsigned long now = 0;
 Time t = {10,20,30,true};
 ESP8266WebServer server;
 TimeConfig config ;
+volatile bool lampState;
 
 void printTime(const Time &t)
 {
@@ -66,11 +68,12 @@ void configSetup()
 
 void timeGet()
 {
-  server.send(200, "application/json", "{\"heure\":" + String(t.heure) + ",\"minute\":" + String(t.minute) + ",\"seconde\":" + String(t.seconde) + "}");
+  server.send(200, "application/json", "{\"heure\":" + String(t.heure) + ",\"minute\":" + String(t.minute) + ",\"seconde\":" + String(t.seconde) + ",\"ledState\" : "+String(lampState)+"}");
 }
 
 void command()
 {
+  //Serial.println("passer");
   if(server.hasArg("plain"))
   {
     String json = server.arg("plain");
@@ -81,7 +84,8 @@ void command()
     {
       Serial.println("Erreur de désérialisation");
     }
-    digitalWrite(LAMP_PIN,doc["etat"]);
+    //Serial.println(json);
+    lampState =  doc["etat"]? true :false;
   }
   else
   {
@@ -101,6 +105,9 @@ void setup()
   //init de la lampe
   pinMode(LAMP_PIN,OUTPUT);
   digitalWrite(LAMP_PIN,0);
+
+  //INIT DU SWITCH
+  pinMode(SWITCH_PIN,INPUT_PULLUP);
   
   //init du port série
   Serial.begin(115200);
@@ -119,6 +126,7 @@ void setup()
   {
     config.onTime = Time{20,0,0,true};
     config.ofTime = Time{7,0,0,true};
+    config.isvalide = true;
   }
 
   // Récupération du temps réel actuel en ligne grâce au gsm
@@ -150,11 +158,12 @@ void loop()
   server.handleClient();
   if(millis() - now > INTERVALLE)
   {
-    printTime(t);
+    //printTime(t);
     t = getHeureActuelleToRTC(rtc);
-    bool lampState = false;
-    updateStateFlexible(config,lampState,t);
+    updateState(config,lampState,t);
     digitalWrite(LAMP_PIN,lampState);
     now = millis();
   }
+  lampState = digitalRead(LAMP_PIN);
+  digitalWrite(LAMP_PIN,!digitalRead(SWITCH_PIN));
 }
