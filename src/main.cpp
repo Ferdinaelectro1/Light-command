@@ -11,7 +11,7 @@
 #include "timeManager.h"
 
 #define INTERVALLE 1000
-#define LAMP_PIN 16
+#define LAMP_PIN 13
 #define SWITCH_PIN 2
 
 const char *ssid = "esp8266 wifi";
@@ -23,6 +23,8 @@ Time t = {10,20,30,true};
 ESP8266WebServer server;
 TimeConfig config ;
 volatile bool lampState;
+bool onLineStateCmd = false;
+volatile bool leduserController = false;
 
 void printTime(const Time &t)
 {
@@ -84,13 +86,22 @@ void command()
     {
       Serial.println("Erreur de désérialisation");
     }
-    //Serial.println(json);
-    lampState =  doc["etat"]? true :false;
+    Serial.println(json);
+    onLineStateCmd =  doc["etat"]? true :false;
+    leduserController = !leduserController;
+    digitalWrite(LAMP_PIN,leduserController);
   }
   else
   {
     server.send(404,"text/json", "{\"status\" : \"echec\"}");
   }
+}
+
+//ISR de l'interruption su switch
+void IRAM_ATTR gestionInterruption()
+{
+  leduserController = !leduserController;
+  digitalWrite(LAMP_PIN,leduserController);
 }
 
 void setup()
@@ -151,6 +162,9 @@ void setup()
   server.on("/time", HTTP_GET, timeGet);
   server.on("/commands",HTTP_POST,command);
   server.begin();
+
+  //attach interrupt
+  attachInterrupt(digitalPinToInterrupt(SWITCH_PIN), gestionInterruption, CHANGE);
 }
 
 void loop()
@@ -158,12 +172,11 @@ void loop()
   server.handleClient();
   if(millis() - now > INTERVALLE)
   {
-    //printTime(t);
+    printTime(t);
     t = getHeureActuelleToRTC(rtc);
-    updateState(config,lampState,t);
-    digitalWrite(LAMP_PIN,lampState);
+    bool comptConfigSate;
+    updateState(config,comptConfigSate,t,leduserController);
     now = millis();
   }
   lampState = digitalRead(LAMP_PIN);
-  digitalWrite(LAMP_PIN,!digitalRead(SWITCH_PIN));
 }

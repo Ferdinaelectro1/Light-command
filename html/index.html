@@ -299,13 +299,13 @@ setInterval(() => {
 // ==== Fin de la section d'affichage du temps ====
 
     function envoyerEtat(url) {
-        console.log("passé");
+        ledState = !ledState;
         fetch(url, {
             method: "POST",
             headers: {
             "Content-Type": "application/json"
             },
-            body: JSON.stringify({ etat: !ledState })
+            body: JSON.stringify({ etat: ledState })
         })
         .then(response => {
             if (!response.ok) {

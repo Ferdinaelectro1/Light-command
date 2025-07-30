@@ -4,11 +4,11 @@
 
 struct Time
 {
-    long annee;
-    long mois;
-    long jour;
+    long annee = 0;
+    long mois = 0;
+    long jour = 0;
     long heure;
-    long minute;
+    long minute ;
     long seconde;    
     bool valide;
 
@@ -21,7 +21,7 @@ struct Time
         if (mois > other.mois) return 0;
 
         if (jour < other.jour) return 1;
-        if (jour > other.jour) return 0;
+        if (jour > other.jour) return 0; 
 
         if (heure < other.heure) return 1;
         if (heure > other.heure) return 0;
@@ -42,7 +42,7 @@ struct Time
         if (mois > other.mois) return 1;
 
         if (jour < other.jour) return 0;
-        if (jour > other.jour) return 1;
+        if (jour > other.jour) return 1; 
 
         if (heure < other.heure) return 0;
         if (heure > other.heure) return 1;

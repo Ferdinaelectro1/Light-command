@@ -1,4 +1,5 @@
 #pragma once
+#define LAMP_PIN 13
 #include "def.h"
 
 
@@ -36,7 +37,7 @@ void updateStateFlexible(const TimeConfig& config, bool& state, const Time& curr
     }
 }
 
-void updateState(const TimeConfig& config, volatile bool& state, const Time& currentTime)
+void updateState(const TimeConfig& config, volatile bool& state, const Time& currentTime,volatile bool manuelController)
 {
     // Vérifie la validité des temps
     if (!config.isvalide || !currentTime.valide)
@@ -44,13 +45,15 @@ void updateState(const TimeConfig& config, volatile bool& state, const Time& cur
 
     // Allumer à la date/heure exacte
     if (currentTime == config.onTime) {
-        state = true;
+          state = true;
+          digitalWrite(LAMP_PIN,true);
         return;
     }
 
     // Éteindre à la date/heure exacte
     if (currentTime == config.ofTime) {
-        state = false;
+          state = false;
+          digitalWrite(LAMP_PIN,false);
         return;
     }
 }
