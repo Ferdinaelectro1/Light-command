@@ -183,7 +183,7 @@ void loop()
     printTime(t);
     t = getHeureActuelleToRTC(rtc);
     bool lampState = false;
-    updateState(config,lampState,t);
+    updateState(config,lampState,t, LAMP_PIN); // Ajout de l'attribut du pin
     now = millis();
   }
   LampState = digitalRead(LAMP_PIN);
