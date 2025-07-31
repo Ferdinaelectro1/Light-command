@@ -50,6 +50,7 @@ void handleRoot(AsyncWebServerRequest *request)
 
 void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
+  Serial.println("passer");
   String json = String((char*)data);
   config = convertToTimeConfig(json);
   config.isvalide = true;
@@ -107,11 +108,23 @@ void IRAM_ATTR gestionSwitch2()
 
 void getConfig(AsyncWebServerRequest *request)
 {
-  request->send(200,"text/json",String("{")+
-  "\"allumage\":"+
-  "{\"annee\": 2025,\"mois\": 7,\"jour\": 31,\"heure\":"+String(config.onTime.heure)+",\"minute\":"+String(config.onTime.minute)+",\"seconde\":"+String(config.onTime.seconde)+"},"+
-  +"\"extinction\": {\"annee\": 2025,\"mois\":7,\"jour\":31,\"heure\":"+String(config.ofTime.heure)+",\"minute\":"+String(config.ofTime.minute)+",\"seconde\":"+String(config.ofTime.seconde)+"}"+
-  +"}");
+  String json = "{";
+  json += "\"allumage\":{";
+  json += "\"annee\":2025,\"mois\":7,\"jour\":31,";
+  json += "\"heure\":" + String(config.onTime.heure) + ",";
+  json += "\"minute\":" + String(config.onTime.minute) + ",";
+  json += "\"seconde\":" + String(config.onTime.seconde);
+  json += "},";
+  json += "\"extinction\":{";
+  json += "\"annee\":2025,\"mois\":7,\"jour\":31,";
+  json += "\"heure\":" + String(config.ofTime.heure) + ",";
+  json += "\"minute\":" + String(config.ofTime.minute) + ",";
+  json += "\"seconde\":" + String(config.ofTime.seconde);
+  json += "}";
+  json += "}";
+
+request->send(200, "application/json", json);
+
 }
 
 void setupManuallyTime(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
