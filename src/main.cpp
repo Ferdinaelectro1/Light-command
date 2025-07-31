@@ -27,8 +27,8 @@ unsigned long now = 0;
 Time t = {10,20,30,true};
 AsyncWebServer server(80);
 TimeConfig config ;
-volatile bool LampState = false;
-volatile bool Lamp2State = false;
+bool LampState = false;
+bool Lamp2State = false;
 volatile bool manuelCommandState = false;
 volatile bool manuelCommandState2 = false;
 
@@ -129,7 +129,20 @@ request->send(200, "application/json", json);
 
 void setupManuallyTime(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
-  String json = String((char*)data);
+  String json =  String((char*)data);
+  DynamicJsonDocument doc(1024);
+  DeserializationError error = deserializeJson(doc,json);
+  if(error)
+  {
+    request->send(200,"text/json","{\"ok\" : false}");
+    Serial.println("Erreur de deserialisation");
+    return;
+  }
+  Time t = {
+    doc["heure"], doc["minute"], doc["seconde"], true
+  };
+  setupTimeToRTC(t,rtc);
+  request->send(200,"text/json","{\"ok\" : true}");
 }
 
 void setup()
@@ -211,3 +224,6 @@ void loop()
   LampState = digitalRead(LAMP_PIN);
   Lamp2State = digitalRead(LAMP2_PIN);
 }
+
+
+
