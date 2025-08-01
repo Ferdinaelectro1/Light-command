@@ -56,3 +56,25 @@ void updateState(const TimeConfig& config, volatile bool& state, const Time& cur
         return;
     }
 }
+
+//Dupplication de la fonction UpateSate pour la seconde lampe
+void updateState2(const TimeConfig& config, volatile bool& state, const Time& currentTime)
+{
+    // Vérifie la validité des temps
+/*     if (!config.isvalide || !currentTime.valide)
+        return; */
+    
+    // Allumer à la date/heure exacte
+    if (currentTime == config.onTime) {
+          state = true;
+          digitalWrite(12,true);
+        return;
+    }
+
+    // Éteindre à la date/heure exacte
+    if (currentTime == config.ofTime) {
+          state = false;
+          digitalWrite(12,false);
+        return;
+    }
+}
