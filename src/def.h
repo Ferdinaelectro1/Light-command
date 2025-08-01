@@ -37,6 +37,26 @@ struct Time
     {
         return (heure == other.heure && minute == other.minute && seconde == other.seconde);
     }
+
+    Time operator-(const Time &other)
+    {
+/*           if (s < 0) {
+      s += 60;
+      m -= 1;
+    }
+
+    if (m < 0) {
+      m += 60;
+      h -= 1;
+    }
+
+    if (h < 0) h = 0; */
+      return Time{
+        heure - other.heure,
+        minute - other.minute,
+        seconde - other.seconde
+      };
+    }
 } ;
 
 

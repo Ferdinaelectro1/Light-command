@@ -22,6 +22,7 @@
 const char *ssid = "esp8266 wifi";
 const char *password = "isniis";
 
+Time originTime;
 RTC_DS3231 rtc;
 unsigned long now = 0;
 Time t = {10,20,30,true};
@@ -73,6 +74,7 @@ void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
     printTime(config_lamp1_tache1.ofTime);
     Serial.println(configJson);
     configJson = configJson;
+    originTime = t;
   }
 }
 
@@ -159,7 +161,7 @@ void getConfig(AsyncWebServerRequest *request)
   json += "}";
   json += "}";
   //Serial.println(json);
-  request->send(200, "application/json", json);
+  request->send(200, "application/json", configJson);
 }
 
 void setupManuallyTime(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
@@ -193,6 +195,11 @@ void saveOldState(AsyncWebServerRequest *request, uint8_t *data, size_t len, siz
   }
   saveOldLampState(doc["conserver"]);
   request->send(200,"text/json","{\"ok\" : true}");
+}
+
+void setupHostPoint(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+
 }
 
 void setup()
@@ -234,6 +241,9 @@ void setup()
   t = gsm::getNowTime();
   t.valide = true;
 
+  //Initialisation de l'origine des temps
+  originTime = t;
+
   //Réglage manuelle de l'heure du module rtc grâce à l'heure que le module gsm à récupéré en ligne
   setupTimeToRTC(t,rtc);
   printTime(t);
@@ -248,15 +258,19 @@ void setup()
 
   //configuration des routes du serveur et initialisation du serveur
   server.on("/", handleRoot);
-  server.on("/config", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL, configSetup);
   server.on("/time", HTTP_GET, timeGet);
-  server.on("/lampe", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, command);
-  server.on("/lampe2", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, command2);
-  server.on("/state",HTTP_GET,getLampeState);
-  server.on("/state2",HTTP_GET,getLampeState2);
+  server.on("/setState/sortie-1", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, command);
+  server.on("//setState/sortie-2", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, command2);
+  server.on("/getState/sortie-1",HTTP_GET,getLampeState);//
+  server.on("/getState/sortie-2",HTTP_GET,getLampeState2);//
   server.on("/get-config",HTTP_GET,getConfig);
-  server.on("/regler-heure",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, setupManuallyTime);
-  server.on("/sauvegarde-etat",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, saveOldState);
+  server.on("/sortie-1/tache-1", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL, configSetup);//
+  server.on("/sortie-1/tache-2", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL, configSetup);//
+  server.on("/sortie-2/tache-1", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL, configSetup);//
+  server.on("/sortie-2/tache-2", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL, configSetup);//
+  server.on("/setTime",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, setupManuallyTime);//
+  server.on("/save",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, saveOldState);//
+  server.on("/setInfos-wifi",HTTP_POST,[](AsyncWebServerRequest *request){},NULL,setupHostPoint);//
   server.begin();
 
   //attach interrupt
@@ -274,6 +288,7 @@ void loop()
     updateState(config_lamp1_tache2,t,LAMP1_PIN);
     updateState(config_lamp1_tache1,t,LAMP2_PIN);
     updateState(config_lamp2_tache2,t,LAMP2_PIN);
+    updateTimeallTwelve(rtc,t,originTime);
     now = millis();
   }
   Lamp1State = digitalRead(LAMP1_PIN);

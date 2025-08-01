@@ -1,6 +1,8 @@
 #pragma once
+#include <RTClib.h>
 #include "def.h"
-
+#include "rtc_horloge_manager.h"
+#include "gsm_manager.h"
 
 //cette fonction permet de changer l'état de la lampe en fonction de l'heure d'allumage et de l'heure d'extinction
 void updateStateFlexible(const TimeConfig& config, bool& state, const Time& currentTime)
@@ -52,5 +54,13 @@ void updateState(const TimeConfig& config, const Time& currentTime,uint8_t pinTo
     if (currentTime == config.ofTime) {
           digitalWrite(pinToDeclenche,false);
         return;
+    }
+}
+
+void updateTimeallTwelve(RTC_DS3231 &rtc, const Time &nowTime,const Time &originTime)
+{
+    if(nowTime - originTime >= Time{12,0,0,true})
+    {
+        setupTimeToRTC(gsm::getNowTime(),rtc);
     }
 }
