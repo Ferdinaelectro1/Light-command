@@ -12,6 +12,7 @@
 
 #define INTERVALLE 1000
 #define LAMP_PIN 13
+#define LAMP_PIN2 12
 #define SWITCH_PIN 2
 
 const char *ssid = "esp8266 wifi";
@@ -24,6 +25,11 @@ ESP8266WebServer server;
 TimeConfig config ;
 volatile bool LampState = false;
 volatile bool manuelCommandState = false;
+
+Time t2 = {10,20,30,true};
+TimeConfig config2 ;
+volatile bool LampState2 = false;
+volatile bool manuelCommandState2 = false;
 
 void printTime(const Time &t)
 {
@@ -126,6 +132,9 @@ void setup()
   //init de la lampe
   pinMode(LAMP_PIN,OUTPUT);
   digitalWrite(LAMP_PIN,0);
+
+  pinMode(LAMP_PIN2, OUTPUT);
+  digitalWrite(LAMP_PIN2, 0);
   
   //init du port série
   Serial.begin(115200);
@@ -139,20 +148,30 @@ void setup()
   if(loadTimeConfigToEEPROM().isvalide)
   {
     config = loadTimeConfigToEEPROM();
+    config2 = loadTimeConfigToEEPROM();
   }
   else //sinon config par défaut
   {
     config.onTime = Time{19,0,0,true};
     config.ofTime = Time{7,0,0,true};
+
+    config2.onTime = Time{19,0,0,true};
+    config2.ofTime = Time{7,0,0,true};
   }
 
   // Récupération du temps réel actuel en ligne grâce au gsm
   t = gsm::getNowTime();
   t.valide = true;
 
+  t2 = gsm::getNowTime();
+  t2.valide = true;
+
   //Réglage manuelle de l'heure du module rtc grâce à l'heure que le module gsm à récupéré en ligne
   setupTimeToRTC(t,rtc);
   printTime(t);
+
+  setupTimeToRTC(t2,rtc);
+  printTime(t2);
 
   // Réactiver le WiFi
   Serial.println("Starting WiFi AP...");
@@ -184,7 +203,13 @@ void loop()
     t = getHeureActuelleToRTC(rtc);
     bool lampState = false;
     updateState(config,lampState,t);
+
+    t2 = getHeureActuelleToRTC(rtc);
+    bool lampState2 = false;
+    updateState2(config2,lampState2,t2);
+      
     now = millis();
   }
   LampState = digitalRead(LAMP_PIN);
+  LampState2 = digitalRead(LAMP_PIN2)
 }
