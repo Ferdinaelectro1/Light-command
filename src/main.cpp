@@ -30,6 +30,7 @@ TimeConfig config_lamp1_tache1 ;
 TimeConfig config_lamp1_tache2 ;
 TimeConfig config_lamp2_tache1 ;
 TimeConfig config_lamp2_tache2 ;
+String configJson;
 bool Lamp1State = false;
 bool Lamp2State = false;
 volatile bool manuelCommandState1 = false;
@@ -57,7 +58,7 @@ void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
   String json = String((char*)data);
   config_lamp1_tache1 = convertToTimeConfig(json);
   config_lamp1_tache1.isvalide = true;
-  request->send(200, "application/json", "{\"status\" : \"succes\",\"Données\" : "+json+"}");
+  request->send(200, "application/json", "{\"status\" : \"succes\",\"Donnees\" : "+json+"}");
   saveTimeConfigToEEPROM(config_lamp1_tache1);
   Serial.println("==================");
   Serial.println("On Time");
@@ -65,6 +66,7 @@ void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
   Serial.println("Off Time");
   printTime(config_lamp1_tache1.ofTime);
   Serial.println(json);
+  configJson = json;
 }
 
 void timeGet(AsyncWebServerRequest *request)
@@ -137,13 +139,13 @@ void getConfig(AsyncWebServerRequest *request)
 {
   String json = "{";
   json += "\"allumage\":{";
-  json += "\"annee\":2025,\"mois\":7,\"jour\":31,";
+  json += "\"annee\":2025,\"mois\":8,\"jour\":1,";
   json += "\"heure\":" + String(config_lamp1_tache1.onTime.heure) + ",";
   json += "\"minute\":" + String(config_lamp1_tache1.onTime.minute) + ",";
   json += "\"seconde\":" + String(config_lamp1_tache1.onTime.seconde);
   json += "},";
   json += "\"extinction\":{";
-  json += "\"annee\":2025,\"mois\":7,\"jour\":31,";
+  json += "\"annee\":2025,\"mois\":8,\"jour\":1,";
   json += "\"heure\":" + String(config_lamp1_tache1.ofTime.heure) + ",";
   json += "\"minute\":" + String(config_lamp1_tache1.ofTime.minute) + ",";
   json += "\"seconde\":" + String(config_lamp1_tache1.ofTime.seconde);
@@ -262,7 +264,6 @@ void loop()
   {
     printTime(t);
     t = getHeureActuelleToRTC(rtc);
-    bool lampState = false;
     updateState(config_lamp1_tache1,t,LAMP1_PIN);
     updateState(config_lamp1_tache2,t,LAMP1_PIN);
     updateState(config_lamp2_tache1,t,LAMP2_PIN);

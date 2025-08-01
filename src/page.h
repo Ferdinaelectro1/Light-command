@@ -593,14 +593,19 @@ const char code[] PROGMEM = R"rawliteral(
 
         // ===== GESTION DES CONFIGURATIONS =====
         async function loadCurrentConfig() {
+            console.log("passer debut");
+
             try {
+                console.log("passer avant");
                 const response = await fetch(`${BASE_URL}/get-config`);
-                
+                console.log("passer après");
                 if (!response.ok) throw new Error('Erreur réseau');
                 
                 const config = await response.json();
+                console.log("passer après json");
                 currentConfig = config;
                 displayConfigurations();
+                console.log("passer display");
                 logDebug('Configurations chargées:', config);
                 
             } catch (err) {
