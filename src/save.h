@@ -7,6 +7,11 @@
 const int EEPROM_SIZE = 512;
 const int CONFIG_ADDRESS = 0;
 
+void saveOldLampState(bool isSave)
+{
+
+}
+
 void saveTimeConfigToEEPROM(const TimeConfig &config)
 {
     EEPROM.begin(EEPROM_SIZE);

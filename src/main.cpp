@@ -11,10 +11,10 @@
 #include "timeManager.h"
 
 #define INTERVALLE 1000
-#define LAMP_PIN 13 //d7
+#define LAMP1_PIN 13 //d7
 #define SWITCH_PIN 2 //D4
 #define LAMP2_PIN 15//d8 
-#define SWITCH2_PIN 0 //D4
+#define SWITCH2_PIN 0 //D3
 
 //SCL D1
 //sda d2
@@ -26,10 +26,13 @@ RTC_DS3231 rtc;
 unsigned long now = 0;
 Time t = {10,20,30,true};
 AsyncWebServer server(80);
-TimeConfig config ;
-bool LampState = false;
+TimeConfig config_lamp1_tache1 ;
+TimeConfig config_lamp1_tache2 ;
+TimeConfig config_lamp2_tache1 ;
+TimeConfig config_lamp2_tache2 ;
+bool Lamp1State = false;
 bool Lamp2State = false;
-volatile bool manuelCommandState = false;
+volatile bool manuelCommandState1 = false;
 volatile bool manuelCommandState2 = false;
 
 void printTime(const Time &t)
@@ -52,15 +55,15 @@ void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
 {
   Serial.println("passer");
   String json = String((char*)data);
-  config = convertToTimeConfig(json);
-  config.isvalide = true;
+  config_lamp1_tache1 = convertToTimeConfig(json);
+  config_lamp1_tache1.isvalide = true;
   request->send(200, "application/json", "{\"status\" : \"succes\",\"Données\" : "+json+"}");
-  saveTimeConfigToEEPROM(config);
+  saveTimeConfigToEEPROM(config_lamp1_tache1);
   Serial.println("==================");
   Serial.println("On Time");
-  printTime(config.onTime);
+  printTime(config_lamp1_tache1.onTime);
   Serial.println("Off Time");
-  printTime(config.ofTime);
+  printTime(config_lamp1_tache1.ofTime);
   Serial.println(json);
 }
 
@@ -84,20 +87,20 @@ void command(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t i
   }
 
   request->send(200, "application/json", "{\"status\":\"succes\"}");
-  manuelCommandState = !manuelCommandState;
-  digitalWrite(LAMP_PIN,manuelCommandState);
+  manuelCommandState1 = !manuelCommandState1;
+  digitalWrite(LAMP1_PIN,manuelCommandState1);
 }
 
 
 void getLampeState(AsyncWebServerRequest *request)
 {
-  request->send(200,"text/json","{\"etat\": "+String(LampState)+"}");
+  request->send(200,"text/json","{\"etat\": "+String(Lamp1State)+"}");
 }
 
 void IRAM_ATTR gestionInterruption()
 {
-  manuelCommandState = !manuelCommandState;
-  digitalWrite(LAMP_PIN,manuelCommandState);
+  manuelCommandState1 = !manuelCommandState1;
+  digitalWrite(LAMP1_PIN,manuelCommandState1);
 }
 
 void IRAM_ATTR gestionSwitch2()
@@ -111,15 +114,15 @@ void getConfig(AsyncWebServerRequest *request)
   String json = "{";
   json += "\"allumage\":{";
   json += "\"annee\":2025,\"mois\":7,\"jour\":31,";
-  json += "\"heure\":" + String(config.onTime.heure) + ",";
-  json += "\"minute\":" + String(config.onTime.minute) + ",";
-  json += "\"seconde\":" + String(config.onTime.seconde);
+  json += "\"heure\":" + String(config_lamp1_tache1.onTime.heure) + ",";
+  json += "\"minute\":" + String(config_lamp1_tache1.onTime.minute) + ",";
+  json += "\"seconde\":" + String(config_lamp1_tache1.onTime.seconde);
   json += "},";
   json += "\"extinction\":{";
   json += "\"annee\":2025,\"mois\":7,\"jour\":31,";
-  json += "\"heure\":" + String(config.ofTime.heure) + ",";
-  json += "\"minute\":" + String(config.ofTime.minute) + ",";
-  json += "\"seconde\":" + String(config.ofTime.seconde);
+  json += "\"heure\":" + String(config_lamp1_tache1.ofTime.heure) + ",";
+  json += "\"minute\":" + String(config_lamp1_tache1.ofTime.minute) + ",";
+  json += "\"seconde\":" + String(config_lamp1_tache1.ofTime.seconde);
   json += "}";
   json += "}";
 
@@ -145,6 +148,21 @@ void setupManuallyTime(AsyncWebServerRequest *request, uint8_t *data, size_t len
   request->send(200,"text/json","{\"ok\" : true}");
 }
 
+void saveOldState(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  String json = String((char *)data);
+  DynamicJsonDocument doc(200);
+  DeserializationError error = deserializeJson(doc,json);
+  if(error)
+  {
+    request->send(400,"text/json","{\"ok\" : false}");
+    Serial.println("Erreur de deserialisation du json");
+    return;
+  }
+  saveOldLampState(doc["conserver"]);
+  request->send(200,"text/json","{\"ok\" : true}");
+}
+
 void setup()
 {
   //INIT du module horloge
@@ -155,9 +173,9 @@ void setup()
   }
 
   //init de la lampe
-  pinMode(LAMP_PIN,OUTPUT);
+  pinMode(LAMP1_PIN,OUTPUT);
   pinMode(LAMP2_PIN,OUTPUT);
-  digitalWrite(LAMP_PIN,0);
+  digitalWrite(LAMP1_PIN,0);
   digitalWrite(LAMP2_PIN,0);
   pinMode(0, INPUT_PULLUP); 
   
@@ -172,12 +190,12 @@ void setup()
   //Chargement de la configuration si elle est dans l'eeprom
   if(loadTimeConfigToEEPROM().isvalide)
   {
-    config = loadTimeConfigToEEPROM();
+    config_lamp1_tache1 = loadTimeConfigToEEPROM();
   }
   else //sinon config par défaut
   {
-    config.onTime = Time{19,0,0,true};
-    config.ofTime = Time{7,0,0,true};
+    config_lamp1_tache1.onTime = Time{19,0,0,true};
+    config_lamp1_tache1.ofTime = Time{7,0,0,true};
   }
 
   // Récupération du temps réel actuel en ligne grâce au gsm
@@ -204,6 +222,7 @@ void setup()
   server.on("/state",HTTP_GET,getLampeState);
   server.on("/get-config",HTTP_GET,getConfig);
   server.on("/regler-heure",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, setupManuallyTime);
+  server.on("/sauvegarde-etat",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, saveOldState);
   server.begin();
 
   //attach interrupt
@@ -218,10 +237,13 @@ void loop()
     printTime(t);
     t = getHeureActuelleToRTC(rtc);
     bool lampState = false;
-    updateState(config,lampState,t);
+    updateState(config_lamp1_tache1,t,LAMP1_PIN);
+    updateState(config_lamp1_tache2,t,LAMP1_PIN);
+    updateState(config_lamp2_tache1,t,LAMP2_PIN);
+    updateState(config_lamp2_tache2,t,LAMP2_PIN);
     now = millis();
   }
-  LampState = digitalRead(LAMP_PIN);
+  Lamp1State = digitalRead(LAMP1_PIN);
   Lamp2State = digitalRead(LAMP2_PIN);
 }
 
