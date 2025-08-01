@@ -91,10 +91,34 @@ void command(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t i
   digitalWrite(LAMP1_PIN,manuelCommandState1);
 }
 
+void command2(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  String json = String((char*)data); 
+  //Serial.write(data, len);
+
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc,json);
+  if(error)
+  {
+    Serial.println("Erreur de désérialisation");
+    request->send(400, "application/json", "{\"status\":\"echec\"}");
+      return;
+  }
+
+  request->send(200, "application/json", "{\"status\":\"succes\"}");
+  manuelCommandState2 = !manuelCommandState2;
+  digitalWrite(LAMP2_PIN,manuelCommandState2);
+}
+
 
 void getLampeState(AsyncWebServerRequest *request)
 {
   request->send(200,"text/json","{\"etat\": "+String(Lamp1State)+"}");
+}
+
+void getLampeState2(AsyncWebServerRequest *request)
+{
+  request->send(200,"text/json","{\"etat\": "+String(Lamp2State)+"}");
 }
 
 void IRAM_ATTR gestionInterruption()
@@ -219,7 +243,9 @@ void setup()
   server.on("/config", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL, configSetup);
   server.on("/time", HTTP_GET, timeGet);
   server.on("/lampe", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, command);
+  server.on("/lampe2", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, command2);
   server.on("/state",HTTP_GET,getLampeState);
+  server.on("/state2",HTTP_GET,getLampeState2);
   server.on("/get-config",HTTP_GET,getConfig);
   server.on("/regler-heure",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, setupManuallyTime);
   server.on("/sauvegarde-etat",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, saveOldState);

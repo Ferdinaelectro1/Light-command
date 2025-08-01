@@ -97,13 +97,15 @@ const char code[] PROGMEM = R"rawliteral(
             color: var(--primary-color);
         }
 
-        #etat_lampe {
+        #etat_lampe, #etat_lampe2 {
             font-weight: bold;
             padding: 0.3rem 0.5rem;
             border-radius: var(--border-radius);
             color: white;
         }
-
+        .lampe2 {
+            margin-top: 20px;
+        }
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -166,15 +168,15 @@ const char code[] PROGMEM = R"rawliteral(
             opacity: 0.7;
         }
 
-        #btn-Lampe {
+        #btn-Lampe, #btn-Lampe2 {
             background-color: var(--loading-color);
         }
 
-        #btn-Lampe.on-state {
+        #btn-Lampe.on-state, #btn-Lampe2.on-state {
             background-color: var(--off-color);
         }
 
-        #btn-Lampe.off-state {
+        #btn-Lampe.off-state, #btn-Lampe2.off-state {
             background-color: var(--on-color);
         }
 
@@ -283,10 +285,14 @@ const char code[] PROGMEM = R"rawliteral(
                 <p><span id="heure">--</span> : <span id="minute">--</span> : <span id="seconde">--</span></p>
             </section>
             <section id="commandes">
-                <h2>Commande de la lampe</h2>
+                <h2>Commande des lampes</h2>
                 <article>
-                    <p>État de la lampe : <span id="etat_lampe" class="state-loading">Chargement...</span></p>
+                    <p>État de la lampe 1: <span id="etat_lampe" class="state-loading">Chargement...</span></p>
                     <button id="btn-Lampe" disabled>Chargement...</button>
+                </article>
+                <article>
+                    <p class="lampe2">État de la lampe 2: <span id="etat_lampe2" class="state-loading">Chargement...</span></p>
+                    <button id="btn-Lampe2" disabled>Chargement...</button>
                 </article>
             </section>
         </div>
@@ -344,9 +350,12 @@ const char code[] PROGMEM = R"rawliteral(
         const nextOffConfigEl = document.getElementById('next-off-config');
         const onConfigInput = document.getElementById('on_config');
         const offConfigInput = document.getElementById('off_config');
+        const etatLampEl2 = document.getElementById('etat_lampe2');
+        const btnLampeEl2 = document.getElementById('btn-Lampe2');
 
         // ===== ÉTAT APPLICATION =====
         let lampeState = null; // null = état inconnu, true = allumé, false = éteint
+        let lampeState2 = null; // lampe 2
         let currentConfig = {
             allumage: null,
             extinction: null
@@ -444,6 +453,21 @@ const char code[] PROGMEM = R"rawliteral(
             }
         }
 
+        function updateUIState2() {
+            if (lampeState2 === null) {
+                btnLampeEl2.textContent = "Chargement...";
+                btnLampeEl2.className = "";
+                btnLampeEl2.disabled = true;
+                etatLampEl2.textContent = "Chargement...";
+                etatLampEl2.className = "state-loading";
+            } else {
+                btnLampeEl2.textContent = lampeState2 ? "Éteindre" : "Allumer";
+                btnLampeEl2.className = lampeState2 ? "on-state" : "off-state";
+                btnLampeEl2.disabled = false;
+                etatLampEl2.textContent = lampeState2 ? "Allumée" : "Éteinte";
+                etatLampEl2.className = lampeState2 ? "state-on" : "state-off";
+            }
+        }
         // ===== GESTION DE LA LAMPE =====
         async function toggleLampe() {
             if (lampeState === null) return;
@@ -476,6 +500,38 @@ const char code[] PROGMEM = R"rawliteral(
                 btnLampeEl.disabled = false;
             }
         }
+        // contrôle de la deuxième lampe
+        async function toggleLampe2() {
+            if (lampeState2 === null) return;
+            
+            btnLampeEl2.disabled = true;
+            const newState = !lampeState2;
+            
+            try {
+                const response = await fetch(`${BASE_URL}/lampe2`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ state: newState })
+                });
+                
+                if (!response.ok) throw new Error('Erreur réseau');
+                
+                const result = await response.json();
+                logDebug('Réponse lampe 2:', result);
+                
+                lampeState2 = newState;
+                updateUIState2();
+                showToast(`Lampe 2 ${newState ? 'allumée' : 'éteinte'} avec succès`);
+                
+            } catch (err) {
+                logDebug('Erreur lampe 2:', err);
+                showToast('Erreur de commande', 'error');
+            } finally {
+                btnLampeEl2.disabled = false;
+            }
+        }
 
         async function checkLampeState() {
             try {
@@ -492,6 +548,23 @@ const char code[] PROGMEM = R"rawliteral(
                 showToast('Erreur de connexion', 'error');
             } finally {
                 updateUIState();
+            }
+        }
+        async function checkLampeState2() {
+            try {
+                const response = await fetch(`${BASE_URL}/state2`);
+                
+                if (!response.ok) throw new Error('Erreur réseau');
+                
+                const state = await response.json();
+                lampeState2 = state.etat;
+                logDebug('État lampe 2:', lampeState2);
+                
+            } catch (err) {
+                logDebug('Erreur état lampe:', err);
+                showToast('Erreur de connexion', 'error');
+            } finally {
+                updateUIState2();
             }
         }
 
@@ -637,11 +710,13 @@ const char code[] PROGMEM = R"rawliteral(
 
         // ===== ÉVÉNEMENTS =====
         btnLampeEl.addEventListener('click', toggleLampe);
+        btnLampeEl2.addEventListener('click', toggleLampe2);
 
         // ===== INITIALISATION =====
         function init() {
             // Initialiser l'UI avec l'état "chargement"
             updateUIState();
+            updateUIState2();
             
             // Démarrer l'horloge
             updateClock();
@@ -649,7 +724,9 @@ const char code[] PROGMEM = R"rawliteral(
             
             // Vérifier l'état de la lampe
             checkLampeState();
+            checkLampeState2();
             setInterval(checkLampeState, 1000);
+            setInterval(checkLampeState2, 1000);
             
             // Charger les configurations existantes
             loadCurrentConfig();
