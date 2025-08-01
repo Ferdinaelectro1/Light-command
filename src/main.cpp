@@ -55,18 +55,25 @@ void handleRoot(AsyncWebServerRequest *request)
 void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
   Serial.println("passer");
-  String json = String((char*)data);
-  config_lamp1_tache1 = convertToTimeConfig(json);
-  config_lamp1_tache1.isvalide = true;
-  request->send(200, "application/json", "{\"status\" : \"succes\",\"Donnees\" : "+json+"}");
-  saveTimeConfigToEEPROM(config_lamp1_tache1);
-  Serial.println("==================");
-  Serial.println("On Time");
-  printTime(config_lamp1_tache1.onTime);
-  Serial.println("Off Time");
-  printTime(config_lamp1_tache1.ofTime);
-  Serial.println(json);
-  configJson = json;
+  for (size_t i = 0; i < len; i++) {
+    configJson += (char)data[i];
+  }
+  //attendre que la lecture complète du json soit faite , parceque le buffer du EspAsycServer post est limité
+  //donc il envoie des morcaux, mais nous fournit aussi l'index du morceau actuelle dans le json complet
+  if(index + len == total)
+  {
+    config_lamp1_tache1 = convertToTimeConfig(configJson);
+    config_lamp1_tache1.isvalide = true;
+    request->send(200, "application/json", "{\"status\" : \"succes\",\"Données\" : "+configJson+"}");
+    saveTimeConfigToEEPROM(config_lamp1_tache1);
+    Serial.println("==================");
+    Serial.println("On Time");
+    printTime(config_lamp1_tache1.onTime);
+    Serial.println("Off Time");
+    printTime(config_lamp1_tache1.ofTime);
+    Serial.println(configJson);
+    configJson = configJson;
+  }
 }
 
 void timeGet(AsyncWebServerRequest *request)
@@ -151,9 +158,8 @@ void getConfig(AsyncWebServerRequest *request)
   json += "\"seconde\":" + String(config_lamp1_tache1.ofTime.seconde);
   json += "}";
   json += "}";
-
-request->send(200, "application/json", json);
-
+  //Serial.println(json);
+  request->send(200, "application/json", json);
 }
 
 void setupManuallyTime(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
@@ -262,11 +268,11 @@ void loop()
 {
   if(millis() - now > INTERVALLE)
   {
-    printTime(t);
+   // printTime(t);
     t = getHeureActuelleToRTC(rtc);
     updateState(config_lamp1_tache1,t,LAMP1_PIN);
     updateState(config_lamp1_tache2,t,LAMP1_PIN);
-    updateState(config_lamp2_tache1,t,LAMP2_PIN);
+    updateState(config_lamp1_tache1,t,LAMP2_PIN);
     updateState(config_lamp2_tache2,t,LAMP2_PIN);
     now = millis();
   }
