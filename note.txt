@@ -1,3 +1,21 @@
 - resoudre le gsm qui recupère une mauvaise heure
 - stocker dans l'eeprom
 - debouncing
+
+- terminer le stockage de l'état des lampes quand il y a coupure
+- terminer l'appel de la mise à jour du temps , tout les 12 h.  // fait test
+- faire la modification des infos du point d'accès de l'esp. 
+- terminer l'utilisation d'une seule fonction qui va gérer les routes de configurations.  //fait test
+- terminer la fonction de retour de l'heure actuel en ajoutant le retour de la date aussi
+- terminer les fonction de retour de l'état de chaque lampe // fait test
+- s'assurer que chaque post récupère bien tout le json pour éviter tout problème de la taille du buffer
+- stocker tout les 4 taches dans l'eeprom grâce à un structure dédié //fait test
+- s'assurer que toutes les données qu'il m'envoie par les posts, je les utilisent bien 
+- enlever les choses inutiles (fonction)
+- mettre les configs par défaut dans le else du setup
+
+
+- Experimenter : tester manuellement les 4 taches
+
+
+- À faire : implémenter le std::vector dans arduino

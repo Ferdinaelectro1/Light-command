@@ -27,13 +27,11 @@ RTC_DS3231 rtc;
 unsigned long now = 0;
 Time t = {10,20,30,true};
 AsyncWebServer server(80);
-TimeConfig config_lamp1_tache1 ;
-TimeConfig config_lamp1_tache2 ;
-TimeConfig config_lamp2_tache1 ;
-TimeConfig config_lamp2_tache2 ;
+FourConfig fourconfig;//les 4 taches
 String configJson;
 bool Lamp1State = false;
 bool Lamp2State = false;
+bool saveLampState = false;
 volatile bool manuelCommandState1 = false;
 volatile bool manuelCommandState2 = false;
 
@@ -53,7 +51,7 @@ void handleRoot(AsyncWebServerRequest *request)
   request->send_P(200, "text/html", code);
 }
 
-void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total,const char &which_config)
 {
   Serial.println("passer");
   for (size_t i = 0; i < len; i++) {
@@ -63,17 +61,40 @@ void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
   //donc il envoie des morcaux, mais nous fournit aussi l'index du morceau actuelle dans le json complet
   if(index + len == total)
   {
-    config_lamp1_tache1 = convertToTimeConfig(configJson);
-    config_lamp1_tache1.isvalide = true;
+    TimeConfig cfg = convertToTimeConfig(configJson);
+    cfg.isvalide = true;
+    switch (which_config)
+    {
+      case 'a' :
+        fourconfig.tache_1_lamp_1 = cfg;
+        break;
+
+      case 'b' :
+        fourconfig.tache_2_lamp_1 = cfg;
+        break;
+
+      case 'c' :
+        fourconfig.tache_1_lamp_2 = cfg;
+        break;
+
+      case 'd' :
+        fourconfig.tache_2_lamp_2 = cfg;
+        break;
+
+      default:
+        Serial.println("Config à assigner inconnu");
+        return;
+        break;
+    }
     request->send(200, "application/json", "{\"status\" : \"succes\",\"Données\" : "+configJson+"}");
-    saveTimeConfigToEEPROM(config_lamp1_tache1);
+    saveTimeConfigToEEPROM(fourconfig);
     Serial.println("==================");
     Serial.println("On Time");
-    printTime(config_lamp1_tache1.onTime);
+    printTime(cfg.onTime);
     Serial.println("Off Time");
-    printTime(config_lamp1_tache1.ofTime);
+    printTime(cfg.ofTime);
     Serial.println(configJson);
-    configJson = configJson;
+    configJson.clear();//efface le configJson pour pouvoir l'utiliser pour d'autre config
     originTime = t;
   }
 }
@@ -83,7 +104,7 @@ void timeGet(AsyncWebServerRequest *request)
   request->send(200, "application/json", "{\"heure\":" + String(t.heure) + ",\"minute\":" + String(t.minute) + ",\"seconde\":" + String(t.seconde) + "}");
 }
 
-void command(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+void commandLamp1(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
   String json = String((char*)data); 
   //Serial.write(data, len);
@@ -102,7 +123,7 @@ void command(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t i
   digitalWrite(LAMP1_PIN,manuelCommandState1);
 }
 
-void command2(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+void commandLamp2(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
   String json = String((char*)data); 
   //Serial.write(data, len);
@@ -122,14 +143,14 @@ void command2(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t 
 }
 
 
-void getLampeState(AsyncWebServerRequest *request)
+void getLampe1State(AsyncWebServerRequest *request)
 {
-  request->send(200,"text/json","{\"etat\": "+String(Lamp1State)+"}");
+  request->send(200,"text/json","{\"state\": "+String(Lamp1State)+"}");
 }
 
-void getLampeState2(AsyncWebServerRequest *request)
+void getLampe2State(AsyncWebServerRequest *request)
 {
-  request->send(200,"text/json","{\"etat\": "+String(Lamp2State)+"}");
+  request->send(200,"text/json","{\"state\": "+String(Lamp2State)+"}");
 }
 
 void IRAM_ATTR gestionInterruption()
@@ -146,20 +167,6 @@ void IRAM_ATTR gestionSwitch2()
 
 void getConfig(AsyncWebServerRequest *request)
 {
-  String json = "{";
-  json += "\"allumage\":{";
-  json += "\"annee\":2025,\"mois\":8,\"jour\":1,";
-  json += "\"heure\":" + String(config_lamp1_tache1.onTime.heure) + ",";
-  json += "\"minute\":" + String(config_lamp1_tache1.onTime.minute) + ",";
-  json += "\"seconde\":" + String(config_lamp1_tache1.onTime.seconde);
-  json += "},";
-  json += "\"extinction\":{";
-  json += "\"annee\":2025,\"mois\":8,\"jour\":1,";
-  json += "\"heure\":" + String(config_lamp1_tache1.ofTime.heure) + ",";
-  json += "\"minute\":" + String(config_lamp1_tache1.ofTime.minute) + ",";
-  json += "\"seconde\":" + String(config_lamp1_tache1.ofTime.seconde);
-  json += "}";
-  json += "}";
   //Serial.println(json);
   request->send(200, "application/json", configJson);
 }
@@ -179,7 +186,7 @@ void setupManuallyTime(AsyncWebServerRequest *request, uint8_t *data, size_t len
     doc["heure"], doc["minute"], doc["seconde"], true
   };
   setupTimeToRTC(t,rtc);
-  request->send(200,"text/json","{\"ok\" : true}");
+  request->send(200,"text/json",json);
 }
 
 void saveOldState(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
@@ -193,7 +200,7 @@ void saveOldState(AsyncWebServerRequest *request, uint8_t *data, size_t len, siz
     Serial.println("Erreur de deserialisation du json");
     return;
   }
-  saveOldLampState(doc["conserver"]);
+  saveLampState = doc["conserver"] ? true : false;
   request->send(200,"text/json","{\"ok\" : true}");
 }
 
@@ -214,8 +221,8 @@ void setup()
   //init de la lampe
   pinMode(LAMP1_PIN,OUTPUT);
   pinMode(LAMP2_PIN,OUTPUT);
-  digitalWrite(LAMP1_PIN,0);
-  digitalWrite(LAMP2_PIN,0);
+  digitalWrite(LAMP1_PIN,manuelCommandState1);
+  digitalWrite(LAMP2_PIN,manuelCommandState2);
   pinMode(0, INPUT_PULLUP); 
   
   //init du port série
@@ -227,14 +234,15 @@ void setup()
   delay(1000);
 
   //Chargement de la configuration si elle est dans l'eeprom
-  if(loadTimeConfigToEEPROM().isvalide)
+  FourConfig fcfg = loadTimeConfigsToEEPROM();
+  if(fcfg.isvalide)
   {
-    config_lamp1_tache1 = loadTimeConfigToEEPROM();
+    fourconfig = fcfg;
   }
   else //sinon config par défaut
   {
-    config_lamp1_tache1.onTime = Time{19,0,0,true};
-    config_lamp1_tache1.ofTime = Time{7,0,0,true};
+/*     config_lamp1_tache1.onTime = Time{19,0,0,true};
+    config_lamp1_tache1.ofTime = Time{7,0,0,true}; */
   }
 
   // Récupération du temps réel actuel en ligne grâce au gsm
@@ -258,16 +266,24 @@ void setup()
 
   //configuration des routes du serveur et initialisation du serveur
   server.on("/", handleRoot);
-  server.on("/time", HTTP_GET, timeGet);
-  server.on("/setState/sortie-1", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, command);
-  server.on("//setState/sortie-2", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, command2);
-  server.on("/getState/sortie-1",HTTP_GET,getLampeState);//
-  server.on("/getState/sortie-2",HTTP_GET,getLampeState2);//
+  server.on("/setState/sortie-1", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, commandLamp1);//
+  server.on("//setState/sortie-2", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, commandLamp2);//
   server.on("/get-config",HTTP_GET,getConfig);
-  server.on("/sortie-1/tache-1", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL, configSetup);//
-  server.on("/sortie-1/tache-2", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL, configSetup);//
-  server.on("/sortie-2/tache-1", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL, configSetup);//
-  server.on("/sortie-2/tache-2", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL, configSetup);//
+  server.on("/getTime", HTTP_GET, timeGet);//
+  server.on("/getState/sortie-1",HTTP_GET,getLampe1State);//
+  server.on("/getState/sortie-2",HTTP_GET,getLampe2State);//
+  server.on("/sortie-1/tache-1", HTTP_POST, 
+            [](AsyncWebServerRequest *request){}, NULL, 
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'a');});//
+  server.on("/sortie-1/tache-2", HTTP_POST, 
+            [](AsyncWebServerRequest *request){}, NULL, 
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'b');});//
+  server.on("/sortie-2/tache-1", HTTP_POST,
+            [](AsyncWebServerRequest *request){}, NULL, 
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'c');});//
+  server.on("/sortie-2/tache-2", HTTP_POST, 
+            [](AsyncWebServerRequest *request){}, NULL, 
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'d');});//
   server.on("/setTime",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, setupManuallyTime);//
   server.on("/save",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, saveOldState);//
   server.on("/setInfos-wifi",HTTP_POST,[](AsyncWebServerRequest *request){},NULL,setupHostPoint);//
@@ -284,15 +300,16 @@ void loop()
   {
    // printTime(t);
     t = getHeureActuelleToRTC(rtc);
-    updateState(config_lamp1_tache1,t,LAMP1_PIN);
-    updateState(config_lamp1_tache2,t,LAMP1_PIN);
-    updateState(config_lamp1_tache1,t,LAMP2_PIN);
-    updateState(config_lamp2_tache2,t,LAMP2_PIN);
+    updateState(fourconfig.tache_1_lamp_1,t,LAMP1_PIN);
+    updateState(fourconfig.tache_2_lamp_1,t,LAMP1_PIN);
+    updateState(fourconfig.tache_1_lamp_2,t,LAMP2_PIN);
+    updateState(fourconfig.tache_2_lamp_2,t,LAMP2_PIN);
     updateTimeallTwelve(rtc,t,originTime);
     now = millis();
   }
   Lamp1State = digitalRead(LAMP1_PIN);
   Lamp2State = digitalRead(LAMP2_PIN);
+
 }
 
 
