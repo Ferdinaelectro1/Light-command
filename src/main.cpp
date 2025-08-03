@@ -12,7 +12,7 @@
 
 #define INTERVALLE 1000
 #define LAMP1_PIN 13 //d7
-#define SWITCH_PIN 2 //D4
+#define SWITCH1_PIN 2 //D4
 #define LAMP2_PIN 15//d8 
 #define SWITCH2_PIN 0 //D3
 
@@ -86,7 +86,7 @@ void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
         return;
         break;
     }
-    request->send(200, "application/json", "{\"status\" : \"succes\",\"Données\" : "+configJson+"}");
+    request->send(200, "application/json", configJson);
     saveTimeConfigToEEPROM(fourconfig);
     Serial.println("==================");
     Serial.println("On Time");
@@ -95,20 +95,28 @@ void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
     printTime(cfg.ofTime);
     Serial.println(configJson);
     configJson.clear();//efface le configJson pour pouvoir l'utiliser pour d'autre config
-    originTime = t;
+    //originTime = t; //réinitialiser l'origine des temps
   }
 }
 
-void timeGet(AsyncWebServerRequest *request)
+void getTime(AsyncWebServerRequest *request)
 {
   request->send(200, "application/json", "{\"heure\":" + String(t.heure) + ",\"minute\":" + String(t.minute) + ",\"seconde\":" + String(t.seconde) + "}");
+}
+
+void getDate(AsyncWebServerRequest *request)
+{
+  request->send(200, "application/json", "{\"annee\":" + String(t.heure) + ",\"mois\":" + String(t.minute) + ",\"jour\":" + String(t.seconde) + "}");
 }
 
 void commandLamp1(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
   String json = String((char*)data); 
-  //Serial.write(data, len);
-
+  if(index + len != total)
+  {
+    Serial.println("Débordement du buffer !!");
+    return;
+  }
   JsonDocument doc;
   DeserializationError error = deserializeJson(doc,json);
   if(error)
@@ -118,16 +126,27 @@ void commandLamp1(AsyncWebServerRequest *request, uint8_t *data, size_t len, siz
       return;
   }
 
-  request->send(200, "application/json", "{\"status\":\"succes\"}");
+  request->send(200, "application/json", json);
   manuelCommandState1 = !manuelCommandState1;
   digitalWrite(LAMP1_PIN,manuelCommandState1);
+  //Mise à jour du stockage des états des lampes dans l'eeprom si le stockage est activé
+  if(saveLampState)
+  {
+    LampStates lmpstate;
+    lmpstate.oldLamp1State = digitalRead(LAMP1_PIN);
+    lmpstate.oldLamp2State = digitalRead(LAMP2_PIN);
+    saveOldLampStateToEEPROM(lmpstate);
+  }
 }
 
 void commandLamp2(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
   String json = String((char*)data); 
-  //Serial.write(data, len);
-
+  if(index + len != total)
+  {
+    Serial.println("Débordement du buffer !!");
+    return;
+  }
   JsonDocument doc;
   DeserializationError error = deserializeJson(doc,json);
   if(error)
@@ -137,9 +156,16 @@ void commandLamp2(AsyncWebServerRequest *request, uint8_t *data, size_t len, siz
       return;
   }
 
-  request->send(200, "application/json", "{\"status\":\"succes\"}");
+  request->send(200, "application/json", json);
   manuelCommandState2 = !manuelCommandState2;
   digitalWrite(LAMP2_PIN,manuelCommandState2);
+  if(saveLampState)
+  {
+    LampStates lmpstate;
+    lmpstate.oldLamp1State = digitalRead(LAMP1_PIN);
+    lmpstate.oldLamp2State = digitalRead(LAMP2_PIN);
+    saveOldLampStateToEEPROM(lmpstate);
+  }
 }
 
 
@@ -174,6 +200,11 @@ void getConfig(AsyncWebServerRequest *request)
 void setupManuallyTime(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
   String json =  String((char*)data);
+  if(index + len != total)
+  {
+    Serial.println("Débordement du buffer !!");
+    return;
+  }
   DynamicJsonDocument doc(1024);
   DeserializationError error = deserializeJson(doc,json);
   if(error)
@@ -192,6 +223,11 @@ void setupManuallyTime(AsyncWebServerRequest *request, uint8_t *data, size_t len
 void saveOldState(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
   String json = String((char *)data);
+  if(index + len != total)
+  {
+    Serial.println("Débordement du buffer !!");
+    return;
+  }
   DynamicJsonDocument doc(200);
   DeserializationError error = deserializeJson(doc,json);
   if(error)
@@ -201,7 +237,7 @@ void saveOldState(AsyncWebServerRequest *request, uint8_t *data, size_t len, siz
     return;
   }
   saveLampState = doc["conserver"] ? true : false;
-  request->send(200,"text/json","{\"ok\" : true}");
+  request->send(200,"text/json",json);
 }
 
 void setupHostPoint(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
@@ -221,9 +257,11 @@ void setup()
   //init de la lampe
   pinMode(LAMP1_PIN,OUTPUT);
   pinMode(LAMP2_PIN,OUTPUT);
-  digitalWrite(LAMP1_PIN,manuelCommandState1);
-  digitalWrite(LAMP2_PIN,manuelCommandState2);
-  pinMode(0, INPUT_PULLUP); 
+  //charger l'état de chaque lampes depuis la mémoire eeprom
+  digitalWrite(LAMP1_PIN,loadOldLampesState().oldLamp1State);
+  digitalWrite(LAMP2_PIN,loadOldLampesState().oldLamp2State);
+  pinMode(SWITCH1_PIN, INPUT_PULLUP); 
+  pinMode(SWITCH2_PIN, INPUT_PULLUP); 
   
   //init du port série
   Serial.begin(115200);
@@ -241,8 +279,12 @@ void setup()
   }
   else //sinon config par défaut
   {
-/*     config_lamp1_tache1.onTime = Time{19,0,0,true};
-    config_lamp1_tache1.ofTime = Time{7,0,0,true}; */
+    FourConfig default_config;
+    default_config.tache_1_lamp_1 = TimeConfig{Time{12,0,0},Time{12,3,0}};
+    default_config.tache_1_lamp_1 = TimeConfig{Time{12,5,0},Time{12,7,0}};
+    default_config.tache_1_lamp_1 = TimeConfig{Time{12,8,0},Time{12,9,0}};
+    default_config.tache_1_lamp_1 = TimeConfig{Time{12,10,0},Time{12,11,0}};
+    fourconfig = default_config;
   }
 
   // Récupération du temps réel actuel en ligne grâce au gsm
@@ -266,12 +308,13 @@ void setup()
 
   //configuration des routes du serveur et initialisation du serveur
   server.on("/", handleRoot);
-  server.on("/setState/sortie-1", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, commandLamp1);//
-  server.on("//setState/sortie-2", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, commandLamp2);//
   server.on("/get-config",HTTP_GET,getConfig);
-  server.on("/getTime", HTTP_GET, timeGet);//
+  server.on("/getTime", HTTP_GET, getTime);//
+  server.on("/getDate", HTTP_GET, getDate);//
   server.on("/getState/sortie-1",HTTP_GET,getLampe1State);//
   server.on("/getState/sortie-2",HTTP_GET,getLampe2State);//
+  server.on("/setState/sortie-1", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, commandLamp1);//
+  server.on("/setState/sortie-2", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, commandLamp2);//
   server.on("/sortie-1/tache-1", HTTP_POST, 
             [](AsyncWebServerRequest *request){}, NULL, 
             [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'a');});//
@@ -290,7 +333,7 @@ void setup()
   server.begin();
 
   //attach interrupt
-  attachInterrupt(digitalPinToInterrupt(SWITCH_PIN), gestionInterruption, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(SWITCH1_PIN), gestionInterruption, CHANGE);
   attachInterrupt(digitalPinToInterrupt(SWITCH2_PIN), gestionSwitch2, CHANGE);
 }
 
@@ -298,7 +341,7 @@ void loop()
 {
   if(millis() - now > INTERVALLE)
   {
-   // printTime(t);
+    printTime(t);
     t = getHeureActuelleToRTC(rtc);
     updateState(fourconfig.tache_1_lamp_1,t,LAMP1_PIN);
     updateState(fourconfig.tache_2_lamp_1,t,LAMP1_PIN);
@@ -313,4 +356,31 @@ void loop()
 }
 
 
+//cette fonction doit retourner un pointeur null , jusqu'à ce que qu'elle reçoivent la chaine complète
+char* recupall(uint8_t index, uint8_t len, uint8_t total,uint8_t *data)
+{
+  static char *data_ptr = nullptr;
+  static bool isFinish = true;
 
+  if(data_ptr == nullptr)
+  {
+    data_ptr = new char[len];
+    memcpy(data_ptr,(char *)data,len);
+  }
+  else
+  {
+
+  }
+  if(index + len != total)
+  {
+    isFinish = false;
+    char *new_space = new char[len*2];
+    memcpy(new_space,(char *)data,len);
+    data_ptr = new_space;
+    data_ptr = (char *)data;
+  }
+  else
+  {
+    return data_ptr;
+  }
+}
