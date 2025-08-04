@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accueil</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>YOUPILIGHT</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="/html/manuel.html">Mode manuel</a></li>
+                <li><a href="html/calendrier.html">Mode calendrier</a></li>
+                <li><a href="/html/journal.html">Fichier journal</a></li>
+                <li><a href="/html/parametre.html">Paramètre</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h2>Acceuil</h2>
+        <p>Date et heure du système</p>
+        <span id="year">---</span> / <span id="month">---</span> / <span id="day">---</span>
+        <span id="hour">---</span> : <span id="minute">---</span> : <span id="seconde">---</span>
+        <br>
+        <br>
+        <label for="langue">Choisissez votre langue :</label>
+        <select name="langue" id="langue">
+            <option value="fr" selected>Français</option>
+            <option value="en">Anglais</option>
+        </select>
+        <p>version : <strong>1.0.0</strong></p>
+    </main>
+    <footer>
+    </footer>
+    <script src="/js/acceuil.js"></script>
+</body>
+</html>

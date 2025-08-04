@@ -46,7 +46,7 @@ struct Time
         return (heure == other.heure && minute == other.minute && seconde == other.seconde);
     }
 
-    Time operator-(const Time &other)
+    Time operator-(const Time &other) const
     {
       long h = heure - other.heure;
       long m = minute - other.minute;

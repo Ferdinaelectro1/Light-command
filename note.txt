@@ -2,12 +2,12 @@
 - stocker dans l'eeprom
 - debouncing
 
-- terminer le stockage de l'état des lampes quand il y a coupure.
+- terminer le stockage de l'état des lampes quand il y a coupure. //fait validé
 - terminer l'appel de la mise à jour du temps , tout les 12 h.  // fait test
 - faire la modification des infos du point d'accès de l'esp. 
 - terminer l'utilisation d'une seule fonction qui va gérer les routes de configurations.  //fait test
 - terminer la fonction de retour de l'heure actuel en ajoutant le retour de la date aussi
-- terminer les fonction de retour de l'état de chaque lampe // fait test
+- terminer les fonction de retour de l'état de chaque lampe // fait validé
 - s'assurer que chaque post récupère bien tout le json pour éviter tout problème de la taille du buffer
 - stocker tout les 4 taches dans l'eeprom grâce à un structure dédié //fait test
 - s'assurer que toutes les données qu'il m'envoie par les posts, je les utilisent bien 
@@ -16,6 +16,8 @@
 - s'assurer de le retourner ce qu'il a envoyé pour les postes //fait test
 - s'assurer que toutes les structure qui utilise les data des api , reçoivent des données correspondant à leur type
 - au niveau de getLampe state, si le str bool refuse , passer à la sérialisation en json
+- stocker l'état précédent de la lampe dans l'eeprom
+- gérer le get qu'il fait pour récupérer l'etat de saveOldStates
 
 
 - Experimenter : tester manuellement les 4 taches

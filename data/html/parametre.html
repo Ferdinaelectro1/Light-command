@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paramètre</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+         <h1>YOUPILIGHT</h1>
+        <nav>
+            <ul>
+                <li><a href="/index.html">Accueil</a></li>
+                <li><a href="manuel.html">Mode manuel</a></li>
+                <li><a href="calendrier.html">Mode calendrier</a></li>
+                <li><a href="journal.html">Fichier journal</a></li>
+                <li><a href="parametre.html">Paramètre</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+            <h2>Paramètre</h2>
+            <button id="wifi-btn-modify">Modifier les informations du wifi</button>
+            <button id="time-btn-modify">Réglage de l'heure</button>
+            <article class="modal" id="wifiSection">
+                <h3>Modifier les informations du wifi</h3>
+                <form action="" id="wifi-form">
+                    <label for="ssid">SSID</label>
+                    <input type="text" required placeholder="Nom du wifi" id="ssid">
+                    <label for="password">PASSWORD</label>
+                    <input type="password" required placeholder="Mot de passe" id="password">
+                    <button type="submit">Modifier</button>
+                </form>
+            </article>
+            <article class="modal" id="timeSection">
+                <h3>Réglage de l'heure</h3>
+                <form action="" id="hour-form">
+                    <label for="heure">Heure</label>
+                    <input type="time" placeholder="17:17" id="time" required>
+                    <button type="submit">Régler</button>
+                </form>
+            </article>
+    </main>
+    <script src="/js/parametre.js"></script>
+</body>
+</html>

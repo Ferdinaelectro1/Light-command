@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calendrier</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <h1>YOUPILIGHT</h1>
+    <nav>
+      <ul>
+        <li><a href="/index.html">Accueil</a></li>
+        <li><a href="manuel.html">Mode manuel</a></li>
+        <li><a href="calendrier.html">Mode calendrier</a></li>
+        <li><a href="journal.html">Fichier journal</a></li>
+        <li><a href="parametre.html">Paramètre</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Mode calendrier</h2>
+    <label for="sorties">Sélectionnez la sortie :</label>
+    <select name="sortie" id="sorties">
+      <option value="1" selected>Sortie 1</option>
+      <option value="2">Sortie 2</option>
+    </select><br>
+    <label for="taches">Sélectionnez la tâche :</label>
+    <select name="tache" id="taches">
+      <option value="1" >Tâche 1</option>
+      <option value="2">Tâche 2</option>
+    </select>
+    <form id="sortie-form">
+      <fieldset>
+        <legend>Allumage</legend>
+        <label for="onTime">Heure -- Minute :</label>
+        <input type="time" id="onTime" required><br>
+      </fieldset>
+      <fieldset>
+        <legend>Extinction</legend>
+        <label for="offTime">Heure -- Minute : </label>
+        <input type="time" id="offTime" required>
+      </fieldset>
+      <button type="submit">Envoyer le réglage</button>
+    </form>
+    <section>
+      <form id="save-form">
+        <fieldset>
+          <legend>Sauvegarde</legend>
+          <label for="btn-save">
+            <span id="choice_state">---</span> la sauvegarde après coupure de <span id="selected-output">---</span>
+            <input type="checkbox" id="btn-save">
+          </label>
+          <button type="submit" id="sendChoice">Appliquer le changement</button>
+        </fieldset>
+      </form>
+    </section>
+  <script src="/js/calendrier.js"></script>
+</body>
+</html>
