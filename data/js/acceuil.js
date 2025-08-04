@@ -59,39 +59,56 @@ function scheduleTimeUpdate() {
 }
 
 // 📆 Mise à jour de l'UI de la date
+// 📆 Mise à jour de l'UI de la date
 async function updateDateUI() {
-  const dateData = await api.getDate();
+    const dateData = await api.getDate();
 
-  if (dateData) {
-    const { annee, mois, jour } = dateData;
-    console.log("Données reçues pour la date :", dateData);
-    yearEl.textContent = annee ?? "--";
-    monthEl.textContent = mois ?? "--";
-    dayEl.textContent = jour ?? "--";
-  } else {
-    console.log("Aucune donnée du serveur pour la date. Affichage par défaut.");
-    yearEl.textContent = "--";
-    monthEl.textContent = "--";
-    dayEl.textContent = "--";
-  }
+    if (dateData) {
+        let { annee, mois, jour } = dateData;
+        console.log("Données reçues pour la date :", dateData);
+        
+        // 💡 On formate les valeurs pour qu'elles aient toujours deux chiffres
+        mois = formatNumber(mois);
+        jour = formatNumber(jour);
+
+        yearEl.textContent = annee ?? "--";
+        monthEl.textContent = mois ?? "--";
+        dayEl.textContent = jour ?? "--";
+    } else {
+        console.log("Aucune donnée du serveur pour la date. Affichage par défaut.");
+        yearEl.textContent = "--";
+        monthEl.textContent = "--";
+        dayEl.textContent = "--";
+    }
 }
-
 // ⌚ Mise à jour de l'UI de l’heure
 async function updateTimeUI() {
-  const timeData = await api.getTime();
+    const timeData = await api.getTime();
 
-  if (timeData) {
-    const { heure, minute, seconde } = timeData;
-    console.log("Données reçues pour l’heure :", timeData);
-    hourEl.textContent = heure ?? "--";
-    minuteEl.textContent = minute ?? "--";
-    secondeEl.textContent = seconde ?? "--";
-  } else {
-    console.log("Aucune donnée du serveur pour l'heure. Affichage par défaut.");
-    hourEl.textContent = "--";
-    minuteEl.textContent = "--";
-    secondeEl.textContent = "--";
-  }
+    if (timeData) {
+        let { heure, minute, seconde } = timeData;
+        console.log("Données reçues pour l’heure :", timeData);
+        
+        // 💡 On formate les valeurs pour qu'elles aient toujours deux chiffres
+        heure = formatNumber(heure);
+        minute = formatNumber(minute);
+        seconde = formatNumber(seconde);
+
+        hourEl.textContent = heure ?? "--";
+        minuteEl.textContent = minute ?? "--";
+        secondeEl.textContent = seconde ?? "--";
+    } else {
+        console.log("Aucune donnée du serveur pour l'heure. Affichage par défaut.");
+        hourEl.textContent = "--";
+        minuteEl.textContent = "--";
+        secondeEl.textContent = "--";
+    }
+}
+
+// 💡 Fonction utilitaire pour ajouter un zéro si nécessaire
+function formatNumber(number) {
+    // Si le nombre est un chiffre, on ajoute un "0" devant
+    return number < 10 ? `0${number}` : number;
 }
 
 // 🔌 Requête générique vers l’ESP

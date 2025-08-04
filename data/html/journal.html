@@ -3,25 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <title>Journal</title>
+    <link rel="stylesheet" href="../css/global.css">
 </head>
 <body>
     <header>
-         <h1>YOUPILIGHT</h1>
-        <nav>
-            <ul>
-                <li><a href="/index.html">Accueil</a></li>
-                <li><a href="manuel.html">Mode manuel</a></li>
-                <li><a href="calendrier.html">Mode calendrier</a></li>
-                <li><a href="journal.html">Fichier journal</a></li>
-                <li><a href="parametre.html">Paramètre</a></li>
-            </ul>
-        </nav>
+        <div class="header-container">
+            <h1>YOUPILIGHT</h1>
+            <button id="menu-toggle" class="menu-toggle" aria-label="Menu" aria-expanded="false">
+                <span class="burger-icon"></span>
+            </button>
+        </div>
     </header>
-    <main>
-        <h2>Journal</h2>
-    </main>
+    <div class="page-container">
+        <aside class="sidebar" id="main-nav">
+            <nav>
+                <ul>
+                    <li>
+                        <a href="../index.html">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                                <path d="M12 3L2 12h3v8h5v-6h4v6h5v-8h3L12 3z"/>
+                            </svg>
+                            Accueil
+                        </a>
+                    </li>
+                    <li>
+                        <a href="manuel.html">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                                <path d="M18 2H6v20h12V2zm-2 18H8V4h8v16z"/>
+                                <path d="M12 6v4m0 4v2m6-10l2-2m-2 2l-2-2m2 2v2m0 4l2 2m-2-2l-2 2m2-2v-2"/>
+                            </svg>
+                            Mode manuel
+                        </a>
+                    </li>
+                    <li>
+                        <a href="calendrier.html">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                                <path d="M5 4h14v3H5V4zm0 5h14v11H5V9zm4 4h6v2H9v-2z"/>
+                            </svg>
+                            Mode calendrier
+                        </a>
+                    </li>
+                    <li>
+                        <a href="journal.html">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                                <path d="M14 2H6v20h12V8l-4-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-5-4V3.5L16.5 8H11z"/>
+                            </svg>
+                            Fichier journal
+                        </a>
+                    </li>
+                    <li>
+                        <a href="parametre.html">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                                <path d="M12 15a3 3 0 100-6 3 3 0 000 6zm7-3a7 7 0 01-1.09 3.72l1.43 1.43a8.96 8.96 0 000-10.3l-1.43 1.43A7 7 0 0119 12zm-2.72 3.72a7 7 0 01-3.72 1.09v2a9 9 0 005.15-1.67l-1.43-1.42zM12 19v-2a7 7 0 01-3.72-1.09l-1.43 1.43A9 9 0 0012 21v-2zm-7-7a7 7 0 011.09-3.72L4.64 5.85a8.96 8.96 0 000 10.3l1.43-1.43A7 7 0 015 12zm2.72-3.72a7 7 0 013.72-1.09V5a9 9 0 00-5.15 1.67l1.43 1.43zM12 5v2a7 7 0 013.72-1.09l1.43-1.43A9 9 0 0012 3v2z"/>
+                            </svg>
+                            Paramètre
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="content">
+            <h2>Journal</h2>
+        </main>
+    </div>
+    <script src="../js/journal.js"></script>
+    <script src="../js/nav.js"></script>
 </body>
-<script src="/js/journal.js"></script>
 </html>

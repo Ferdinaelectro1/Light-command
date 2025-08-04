@@ -9,6 +9,21 @@ struct LampStates
   bool oldLamp2State = false;
 };
 
+//strucuture pour représenter le flag de sauvegarde de l'état de chaque lampe
+struct SaveStateActivity
+{
+  bool checkLampe1 = false;
+  bool ckeckLampe2 = false;
+};
+
+//Strucuture pour les infos du wifi
+struct hostPointConfig
+{
+  String ssid ;
+  String password ;
+  bool isvalide = false;
+};
+
 //structure pour représenter le temps
 struct Time
 {
@@ -110,4 +125,30 @@ TimeConfig convertToTimeConfig(const String &str) {
   return cfg;
 }
 
+void PrintConfig(const TimeConfig &timeconfig,const uint8_t &numero)
+{
+  Serial.print("Tâche ");
+  Serial.print(numero);
+  Serial.print(" : [");
+  Serial.print("Allumage : ");
+  Serial.print(timeconfig.onTime.heure);
+  Serial.print(" h ");
+  Serial.print(timeconfig.onTime.minute);
+  Serial.print(" min ");
+  Serial.print(timeconfig.onTime.seconde);
+  Serial.print(" s || Exinction : ");
+  Serial.print(timeconfig.ofTime.heure);
+  Serial.print(" h ");
+  Serial.print(timeconfig.ofTime.minute);
+  Serial.print(" min ");
+  Serial.print(timeconfig.ofTime.seconde);
+  Serial.println(" s ]");
+}
 
+void PrintFourConfig(const FourConfig &fourconfig)
+{
+  PrintConfig(fourconfig.tache_1_lamp_1,1);
+  PrintConfig(fourconfig.tache_2_lamp_1,2);   
+  PrintConfig(fourconfig.tache_1_lamp_2,3);   
+  PrintConfig(fourconfig.tache_2_lamp_2,4);   
+}

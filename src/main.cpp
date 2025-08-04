@@ -20,8 +20,6 @@
 //SCL D1
 //sda d2
 
-const char *ssid = "esp8266 wifi";
-const char *password = "isniis";
 
 Time originTime;
 RTC_DS3231 rtc;
@@ -30,10 +28,11 @@ Time t = {10,20,30,true};
 AsyncWebServer server(80);
 FourConfig fourconfig;//les 4 taches
 String configJson;
+String hostPointConfigJson;
 bool Lamp1State = false;
 bool Lamp2State = false;
-bool saveLamp1State = false;
-bool saveLamp2State = false;
+SaveStateActivity save_activity = {false,false};
+hostPointConfig host_point_config;
 volatile bool manuelCommandState1 = false;
 volatile bool manuelCommandState2 = false;
 volatile bool interruptOnPin1 = false;
@@ -57,7 +56,6 @@ void handleRoot(AsyncWebServerRequest *request)
 
 void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total,const char &which_config)
 {
-  Serial.println("passer");
   for (size_t i = 0; i < len; i++) {
     configJson += (char)data[i];
   }
@@ -90,14 +88,11 @@ void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
         return;
         break;
     }
-    request->send(200, "application/json", configJson);
+    request->send(200, "application/json", "{\"data\" : "+configJson+"}");
     saveTimeConfigToEEPROM(fourconfig);
-    Serial.println("==================");
-    Serial.println("On Time");
-    printTime(cfg.onTime);
-    Serial.println("Off Time");
-    printTime(cfg.ofTime);
     Serial.println(configJson);
+    Serial.println("=======================");
+    PrintFourConfig(fourconfig);
     configJson.clear();//efface le configJson pour pouvoir l'utiliser pour d'autre config
     //originTime = t; //réinitialiser l'origine des temps
   }
@@ -136,9 +131,9 @@ void commandLamp1(AsyncWebServerRequest *request, uint8_t *data, size_t len, siz
   digitalWrite(LAMP1_PIN,manuelCommandState1);
   //Mise à jour du stockage des états des lampes dans l'eeprom si le stockage est activé
   LampStates lmpstate;
-  lmpstate.oldLamp1State = (saveLamp1State) ? digitalRead(LAMP1_PIN) : false;
-  lmpstate.oldLamp2State =  (saveLamp2State) ? digitalRead(LAMP2_PIN) : false;
-  if(saveLamp1State || saveLamp2State)
+  lmpstate.oldLamp1State = (save_activity.checkLampe1) ? digitalRead(LAMP1_PIN) : false;
+  lmpstate.oldLamp2State =  (save_activity.ckeckLampe2) ? digitalRead(LAMP2_PIN) : false;
+  if(save_activity.checkLampe1 || save_activity.ckeckLampe2)
       saveOldLampStateToEEPROM(lmpstate);
 }
 
@@ -163,9 +158,9 @@ void commandLamp2(AsyncWebServerRequest *request, uint8_t *data, size_t len, siz
   manuelCommandState2 = !manuelCommandState2;
   digitalWrite(LAMP2_PIN,manuelCommandState2);
   LampStates lmpstate;
-  lmpstate.oldLamp1State = (saveLamp1State) ? digitalRead(LAMP1_PIN) : false;
-  lmpstate.oldLamp2State =  (saveLamp2State) ? digitalRead(LAMP2_PIN) : false;
-    if(saveLamp1State || saveLamp2State)
+  lmpstate.oldLamp1State = (save_activity.checkLampe1) ? digitalRead(LAMP1_PIN) : false;
+  lmpstate.oldLamp2State =  (save_activity.ckeckLampe2) ? digitalRead(LAMP2_PIN) : false;
+    if(save_activity.checkLampe1 || save_activity.ckeckLampe2)
       saveOldLampStateToEEPROM(lmpstate);
 }
 
@@ -219,7 +214,7 @@ void setupManuallyTime(AsyncWebServerRequest *request, uint8_t *data, size_t len
   Serial.println("{\"data\" : ""}");
 }
 
-void saveOldState1(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+void saveOldState(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total,uint8_t lamp_nbr)
 {
   String json = String((char *)data);
   if(index + len != total)
@@ -235,37 +230,70 @@ void saveOldState1(AsyncWebServerRequest *request, uint8_t *data, size_t len, si
     Serial.println("Erreur de deserialisation du json");
     return;
   }
-  saveLamp1State = doc["save"] ? true : false;
-  request->send(200,"text/json","{\"save\" : "+String(saveLamp1State)+"}");
+  if(lamp_nbr == 1)
+  {
+    save_activity.checkLampe1 = doc["save"] ? true : false;
+  }
+  else if(lamp_nbr == 2)
+     save_activity.ckeckLampe2 = doc["save"] ? true : false;
+  else 
+    Serial.println("lamp a été sauvergarde inconnu");
+  
+  String retour;
+  serializeJson(doc,retour);
+  request->send(200,"text/json","{\"data\" : "+retour+"}");
+  saveCheckActivitytoEEPROM(save_activity);
   Serial.println("Lampe 1 State : ");
-  Serial.println(saveLamp1State);
-}
-
-void saveOldState2(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-{
-  String json = String((char *)data);
-  if(index + len != total)
-  {
-    Serial.println("Débordement du buffer !!");
-    return;
-  }
-  DynamicJsonDocument doc(200);
-  DeserializationError error = deserializeJson(doc,json);
-  if(error)
-  {
-    request->send(400,"text/json","{\"ok\" : false}");
-    Serial.println("Erreur de deserialisation du json");
-    return;
-  }
-  saveLamp2State = doc["save"] ? true : false;
-  request->send(200,"text/json","{\"save\" : "+String(saveLamp2State)+"}");
-  Serial.println("Lampe 2 State : ");
-  Serial.println(saveLamp2State);
+  Serial.println(save_activity.checkLampe1);
 }
 
 void setupHostPoint(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
+  for (size_t i = 0; i < len; i++) {
+    hostPointConfigJson += (char)data[i];
+  }
+   if(index + len == total)
+   {
+    Serial.println(hostPointConfigJson);
+    DynamicJsonDocument doc(1024);
+    DeserializationError error = deserializeJson(doc,hostPointConfigJson);
+    if(error)
+    {
+      Serial.println("Erreur de désérialisation ");
+      return;
+    }
+    host_point_config.ssid = String(doc["ssid"]);
+    host_point_config.password = String(doc["password"]);
+    WiFi.softAPdisconnect(true);
+    request->send(200,"text/json","{\"data\" : "+hostPointConfigJson+"}");
+    delay(1000);
+    WiFi.softAP(host_point_config.ssid, host_point_config.password,1,false);
+    host_point_config.isvalide = true;
+    saveHostPointConfigtoEEPROM(host_point_config);
+   }
+}
 
+void getSaveState(AsyncWebServerRequest *request,uint8_t nbr_lamp)
+{
+  if(nbr_lamp == 1)
+  {
+    String str = "{\"data\" : {\"save\" : ";
+    str += (save_activity.checkLampe1) ? String("true") : String("false");
+    str += "}}";
+    request->send(200,"text/json",str);
+  }
+  else if(nbr_lamp == 2)
+  {
+    String str = "{\"data\" : {\"save\" : ";
+    str += (save_activity.ckeckLampe2) ? String("true") : String("false");
+    str += "}}";
+    request->send(200,"text/json",str);
+  }
+  else
+  {
+    Serial.println("Etat de la lampe inconnu");
+    return;
+  }
 }
 
 void setup()
@@ -279,11 +307,14 @@ void setup()
     while (1);
   }
 
+  //charger les checks (sauvegarder état des lampes)
+  save_activity = loadCheckActivitytoEEPROM();
+
   //init de la lampe
   pinMode(LAMP1_PIN,OUTPUT);
   pinMode(LAMP2_PIN,OUTPUT);
-  bool state1 = loadOldLampesState().oldLamp1State;
-  bool state2 = loadOldLampesState().oldLamp2State;
+  bool state1 = loadOldLampesStatetoEEPROM().oldLamp1State;
+  bool state2 = loadOldLampesStatetoEEPROM().oldLamp2State;
   //charger l'état de chaque lampes depuis la mémoire eeprom
   digitalWrite(LAMP1_PIN,state1);
   digitalWrite(LAMP2_PIN,state2);
@@ -294,10 +325,10 @@ void setup()
   //init du port série
   Serial.println("\n\nStarting setup...");
 
-  Serial.print("Sortie 1 : ");
-  Serial.print(state1);
-  Serial.print("Sortie 2 : ");
-  Serial.print(state2);
+  //Serial.print("Sortie 1 : ");
+  //Serial.print(state1);
+  //Serial.print("Sortie 2 : ");
+  //Serial.print(state2);
   // Désactiver temporairement le WiFi
   WiFi.mode(WIFI_OFF);
   delay(1000);
@@ -310,14 +341,17 @@ void setup()
   }
   else //sinon config par défaut
   {
-    Serial.println("passé dans le else");
+   // Serial.println("passé dans le else");
     FourConfig default_config;
-    default_config.tache_1_lamp_1 = TimeConfig{Time{10,28,0},Time{10,30,0}};
-    default_config.tache_1_lamp_1 = TimeConfig{Time{10,20,0},Time{10,21,0}};
-    default_config.tache_1_lamp_1 = TimeConfig{Time{10,22,0},Time{10,23,0}};
-    default_config.tache_1_lamp_1 = TimeConfig{Time{10,24,0},Time{10,25,0}};
+    default_config.tache_1_lamp_1 = TimeConfig{Time{19,28,0},Time{0,0,0}};
+    default_config.tache_2_lamp_1 = TimeConfig{Time{0,0,0},Time{7,0,0}};
+    default_config.tache_1_lamp_2 = TimeConfig{Time{19,28,0},Time{0,0,0}};
+    default_config.tache_2_lamp_2 = TimeConfig{Time{0,0,0},Time{7,0,0}};
     fourconfig = default_config;
   }
+
+  //affiché la configuration stocké 
+  PrintFourConfig(fourconfig);
 
   // Récupération du temps réel actuel en ligne grâce au gsm
   //t = gsm::getNowTime();
@@ -338,10 +372,25 @@ void setup()
   setupTimeToRTC(t,rtc);
   printTime(t);
 
+  //charger la configuration du point d'accès depuis la mémoire EEPROM
+  hostPointConfig hostcfg = loadHostPointConfigtoEEPROM();
+  if(hostcfg.isvalide)
+  {
+    host_point_config = hostcfg;
+  }
+  else
+  {
+    //config par défaut 
+    host_point_config.ssid = "youpilight_esp";
+    host_point_config.password = "123456789A";
+    Serial.print("default config");
+  }
+
   // Réactiver le WiFi
   Serial.println("Starting WiFi AP...");
   WiFi.mode(WIFI_AP);
-  WiFi.softAP(ssid, password);
+  WiFi.softAP(host_point_config.ssid, host_point_config.password,1,false);
+  Serial.println(host_point_config.ssid);
   IPAddress ip = WiFi.softAPIP();
   Serial.print("AP IP: ");
   Serial.println(ip);
@@ -364,6 +413,8 @@ void setup()
   server.serveStatic("/js", LittleFS, "/js");
   server.serveStatic("/html", LittleFS, "/html");
 
+  server.on("/getSaveState/sortie-1",HTTP_GET,[](AsyncWebServerRequest *request){getSaveState(request,1);});//
+  server.on("/getSaveState/sortie-2",HTTP_GET,[](AsyncWebServerRequest *request){getSaveState(request,2);});//
   server.on("/getTime", HTTP_GET, getTime);//
   server.on("/getDate", HTTP_GET, getDate);//
   server.on("/sortie-1/getState",HTTP_GET,getLampe1State);//
@@ -383,8 +434,10 @@ void setup()
             [](AsyncWebServerRequest *request){}, NULL, 
             [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'d');});//
   server.on("/setTime",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, setupManuallyTime);//
-  server.on("/save/sortie-1",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, saveOldState1);//
-  server.on("/save/sortie-2",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, saveOldState2);//
+  server.on("/save/sortie-1",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL,
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){saveOldState(request,data,len,index,total,1);});//
+  server.on("/save/sortie-2",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL,
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){saveOldState(request,data,len,index,total,2);});//
   server.on("/setInfos-wifi",HTTP_POST,[](AsyncWebServerRequest *request){},NULL,setupHostPoint);//
   server.begin();
 
@@ -411,9 +464,9 @@ void loop()
     interruptOnPin1 = false;
     digitalWrite(LAMP1_PIN,manuelCommandState1);
     LampStates lmpstate;
-    lmpstate.oldLamp1State = (saveLamp1State) ? digitalRead(LAMP1_PIN) : false;
-    lmpstate.oldLamp2State =  (saveLamp2State) ? digitalRead(LAMP2_PIN) : false;
-    if(saveLamp1State || saveLamp2State)
+    lmpstate.oldLamp1State = (save_activity.checkLampe1) ? digitalRead(LAMP1_PIN) : false;
+    lmpstate.oldLamp2State =  (save_activity.ckeckLampe2) ? digitalRead(LAMP2_PIN) : false;
+    if(save_activity.checkLampe1 || save_activity.ckeckLampe2)
       saveOldLampStateToEEPROM(lmpstate);
   }
   if(interruptOnPin2)
@@ -421,9 +474,9 @@ void loop()
     interruptOnPin2 = false;
     digitalWrite(LAMP2_PIN,manuelCommandState2);
     LampStates lmpstate;
-    lmpstate.oldLamp1State = (saveLamp1State) ? digitalRead(LAMP1_PIN) : false;
-    lmpstate.oldLamp2State =  (saveLamp2State) ? digitalRead(LAMP2_PIN) : false;
-    if(saveLamp1State || saveLamp2State)
+    lmpstate.oldLamp1State = (save_activity.checkLampe1) ? digitalRead(LAMP1_PIN) : false;
+    lmpstate.oldLamp2State =  (save_activity.ckeckLampe2) ? digitalRead(LAMP2_PIN) : false;
+    if(save_activity.checkLampe1 || save_activity.ckeckLampe2)
       saveOldLampStateToEEPROM(lmpstate);
   }
   Lamp1State = digitalRead(LAMP1_PIN);
@@ -461,3 +514,5 @@ void loop()
   }
 }
  */
+
+//password : 9012345678

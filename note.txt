@@ -4,20 +4,20 @@
 
 - terminer le stockage de l'état des lampes quand il y a coupure. //fait validé
 - terminer l'appel de la mise à jour du temps , tout les 12 h.  // fait test
-- faire la modification des infos du point d'accès de l'esp. 
-- terminer l'utilisation d'une seule fonction qui va gérer les routes de configurations.  //fait test
+- faire la modification des infos du point d'accès de l'esp. //fait validé
+- terminer l'utilisation d'une seule fonction qui va gérer les routes de configurations.  //fait validé
 - terminer la fonction de retour de l'heure actuel en ajoutant le retour de la date aussi
 - terminer les fonction de retour de l'état de chaque lampe // fait validé
-- s'assurer que chaque post récupère bien tout le json pour éviter tout problème de la taille du buffer
-- stocker tout les 4 taches dans l'eeprom grâce à un structure dédié //fait test
-- s'assurer que toutes les données qu'il m'envoie par les posts, je les utilisent bien 
+- s'assurer que chaque post récupère bien tout le json pour éviter tout problème de la taille du buffer // fait validé
+- stocker tout les 4 taches dans l'eeprom grâce à un structure dédié //fait validé
+- s'assurer que toutes les données qu'il m'envoie par les posts, je les utilisent bien //fait validé
 - enlever les choses inutiles (fonction) 
-- mettre les configs par défaut dans le else du setup //fait test
-- s'assurer de le retourner ce qu'il a envoyé pour les postes //fait test
-- s'assurer que toutes les structure qui utilise les data des api , reçoivent des données correspondant à leur type
-- au niveau de getLampe state, si le str bool refuse , passer à la sérialisation en json
-- stocker l'état précédent de la lampe dans l'eeprom
-- gérer le get qu'il fait pour récupérer l'etat de saveOldStates
+- mettre les configs par défaut dans le else du setup //fait validé
+- s'assurer de le retourner ce qu'il a envoyé pour les postes //fait validé
+- s'assurer que toutes les structure qui utilise les data des api , reçoivent des données correspondant à leur type //fait validé possible
+- au niveau de getLampe state, si le str bool refuse , passer à la sérialisation en json //fait validé
+- stocker l'état précédent de la lampe dans l'eeprom //fait validé
+- gérer le get qu'il fait pour récupérer l'etat de saveOldStates //fait validé
 
 
 - Experimenter : tester manuellement les 4 taches
