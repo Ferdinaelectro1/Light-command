@@ -1,0 +1,427 @@
+
+/* Styles spécifiques à la page d'accueil (pour éviter les conflits) */
+/* Styles spécifiques à la page d'accueil */
+.page-accueil .content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Grille de cartes pour la page d'accueil */
+.home-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    max-width: 900px;
+}
+
+/* Les cartes de la page d'accueil */
+.card {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    text-align: center;
+    height: 100%; /* Assure que les cartes ont la même hauteur */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card h3 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.time-display {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+/* Styles pour les éléments de formulaire */
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+label {
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+
+select {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.version {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    text-align: right;
+    margin-top: auto; /* Pousse la version tout en bas */
+}
+
+/* --- Media Query pour le Responsive Design --- */
+
+@media (max-width: 600px) {
+    .home-card-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+
+/* --- Styles de la page Calendrier --- */
+
+/* Styles de base pour les cartes de formulaire */
+.form-card {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Styles pour les groupes de contrôles (select) */
+.calendar-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Styles des fieldsets */
+.form-fieldset {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-fieldset legend {
+    font-weight: 600;
+    color: var(--primary-color);
+    padding: 0 0.5rem;
+}
+
+/* Styles des inputs et selects */
+.form-card input[type="time"],
+.form-card select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1rem;
+    background-color: #f8f9fa;
+}
+
+/* Styles des labels */
+.form-card label {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+/* Style spécifique pour la case à cocher personnalisée */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: 0.5rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+    display: none; /* Cache la case à cocher par défaut */
+}
+
+.custom-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    display: inline-block;
+    position: relative;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .custom-checkbox {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .custom-checkbox::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+}
+
+/* Style pour les boutons */
+.form-card button {
+    align-self: flex-start; /* Aligne le bouton à gauche */
+    padding: 0.75rem 1.5rem;
+}
+
+/* Media Queries pour le responsive design */
+@media (max-width: 600px) {
+    .calendar-controls {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .form-card {
+        padding: 1.5rem;
+    }
+}
+
+
+/* --- Styles de la page Manuel --- */
+
+/* Mise en page des cartes de sortie */
+.page-manuel .content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.output-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    max-width: 800px;
+    justify-items: center;
+}
+
+.output-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+}
+
+.output-card h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.8rem;
+    color: var(--text-color);
+}
+
+/* Indicateur d'état */
+.output-state {
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+}
+
+.output-state span {
+    font-weight: 700;
+}
+
+/* Boutons de contrôle */
+.output-button {
+    padding: 0.75rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    width: 100%;
+    max-width: 200px;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.output-button:active {
+    transform: scale(0.98);
+}
+
+/* Couleurs des boutons ON/OFF (à gérer avec JavaScript) */
+.output-button.is-on {
+    background-color: #28a745; /* Vert pour ON */
+    color: #fff;
+}
+
+.output-button.is-off {
+    background-color: #dc3545; /* Rouge pour OFF */
+    color: #fff;
+}
+/* ... (le reste de ton code CSS) ... */
+
+/* --- Media Queries pour le Responsive Design --- */
+
+/* Applique ces styles si la largeur de l'écran est de 600px ou moins */
+@media (max-width: 600px) {
+    /* Cache la barre latérale par défaut sur mobile */
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    /* Affiche la barre latérale quand elle est active */
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    
+    /* Le contenu principal prend toute la largeur */
+    .page-container {
+        grid-template-columns: 1fr;
+    }
+
+    /* Styles spécifiques à la page du Mode Manuel sur mobile */
+    .page-manuel .content {
+        padding: 1rem; /* Diminue l'espace intérieur sur les petits écrans */
+    }
+    
+    .output-grid {
+        /* Les cartes se superposent en une seule colonne */
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .output-card {
+        padding: 1.5rem; /* Diminue la taille des cartes pour les petits écrans */
+    }
+    
+    .output-card h3 {
+        font-size: 1.5rem;
+    }
+    
+    .output-state {
+        font-size: 1rem;
+    }
+}
+
+
+
+/* --- Styles pour la page Paramètre --- */
+/* ... (le reste de ton code CSS pour la page parametre) ... */
+
+/* Conteneur pour le champ de mot de passe et l'icône */
+.password-group {
+    position: relative; /* Indispensable pour positionner l'icône */
+}
+
+.password-group input {
+    padding-right: 3rem; /* Espace pour l'icône */
+}
+
+/* Styles pour l'icône d'affichage/masquage du mot de passe */
+.password-toggle {
+    position: absolute;
+    right: 1rem; /* Place l'icône à droite */
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: var(--secondary-color);
+}
+
+.password-toggle .icon-hide {
+    display: none; /* Cache l'icône "œil barré" par défaut */
+}
+
+.password-toggle.visible .icon-show {
+    display: none; /* Cache l'icône "œil ouvert" quand le mot de passe est visible */
+}
+
+.password-toggle.visible .icon-hide {
+    display: block; /* Affiche l'icône "œil barré" */
+}
+
+/* Conteneur pour les boutons d'action */
+.settings-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: 500px; /* Limite la largeur du conteneur lui-même */
+    margin: 2rem auto; /* Centre le conteneur */
+    box-shadow: 0 4px 6px var(--shadow-color); /* Ajoute de l'ombre pour le style */
+    border-radius: 8px; /* Ajoute des bords arrondis */
+    background-color: #ffffff;
+}
+
+.settings-actions button {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    max-width: 250px;
+    width: 100%;
+}
+
+
+/* Styles pour les modals (les sections de formulaire) */
+.page-parametre .modal {
+    margin: auto;
+    width: 100%;
+    max-width: 500px;
+}
+
+.page-parametre .modal h3 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+}
+
+.page-parametre .modal .form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.page-parametre .modal .form-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.page-parametre .modal .form-group input {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.page-parametre .modal button {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 0.75rem;
+}
+
+
+/* Media Query pour la version mobile */
+@media (max-width: 600px) {
+    .settings-actions {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+}

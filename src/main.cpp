@@ -105,7 +105,7 @@ void getTime(AsyncWebServerRequest *request)
 
 void getDate(AsyncWebServerRequest *request)
 {
-  request->send(200, "application/json", "{ \"data\" : {\"annee\":" + String(t.heure) + ",\"mois\":" + String(t.minute) + ",\"jour\":" + String(t.seconde) + "}}");
+  request->send(200, "application/json", "{ \"data\" : {\"annee\":2025,\"mois\":4,\"jour\":4}}");
 }
 
 void commandLamp1(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)

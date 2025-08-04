@@ -32,11 +32,9 @@ const api = {
     return null;
   }
 };
-// --- Reste de ton code (apiUrls, api, etc.) ---
-// ...
 
 const ssidEl = document.getElementById("ssid");
-const passwordEL = document.getElementById("password");
+const passwordEl = document.getElementById("password");
 const timeEl = document.getElementById("time");
 const wifiEl = document.getElementById("wifi-form");
 const hourFormEl = document.getElementById('hour-form');
@@ -44,13 +42,14 @@ const wifiBtn = document.getElementById("wifi-btn-modify");
 const timeBtn = document.getElementById("time-btn-modify");
 const wifiSection = document.getElementById('wifiSection');
 const timeSection = document.getElementById('timeSection');
-const modalSections = document.querySelectorAll('.modal'); // 💡 Sélectionne toutes les sections avec la classe 'modal'
+const passwordToggle = document.getElementById('password-toggle'); // 💡 Sélectionne l'icône
+const modalSections = document.querySelectorAll('.modal');
 
-if (!ssidEl || !passwordEL || !timeEl || !wifiEl || !wifiBtn || !timeBtn || !timeSection || !wifiSection) {
+if (!ssidEl || !passwordEl || !timeEl || !wifiEl || !wifiBtn || !timeBtn || !timeSection || !wifiSection || !passwordToggle) {
   console.error("Un ou plusieurs éléments n'existent pas dans le DOM. Le script ne peut pas continuer.");
 } else {
   // ⛱️ Masquer tout au départ
-  modalSections.forEach(section => section.style.display = "none"); // 💡 Cache toutes les modales au début
+  modalSections.forEach(section => section.style.display = "none");
 
   // Fonction utilitaire pour afficher une modale et cacher les autres
   function showModal(modalToShow) {
@@ -69,12 +68,27 @@ if (!ssidEl || !passwordEL || !timeEl || !wifiEl || !wifiBtn || !timeBtn || !tim
   timeBtn.addEventListener("click", () => {
     showModal(timeSection);
   });
+  
+  // 💡 Fonctionnalité d'affichage/masquage du mot de passe
+  passwordToggle.addEventListener("click", () => {
+    // Vérifie le type actuel du champ de mot de passe
+    const type = passwordEl.getAttribute("type") === "password" ? "text" : "password";
+    passwordEl.setAttribute("type", type);
+    
+    // Ajoute ou retire la classe 'visible' pour changer l'icône
+    passwordToggle.classList.toggle("visible");
+  });
 
   // 📡 Événement sur la soumission du formulaire Wi-Fi
   wifiEl.addEventListener("submit", async (e) => {
     e.preventDefault();
     const ssid = ssidEl.value.trim();
-    const password = passwordEL.value.trim();
+    const password = passwordEl.value.trim();
+
+    if (password.length < 8) {
+      console.error("Le mot de passe doit avoir au moins 8 caractères !");
+      return;
+    }
 
     if (ssid === "" || password === "") {
       console.error("La configuration est vide !");
@@ -90,15 +104,15 @@ if (!ssidEl || !passwordEL || !timeEl || !wifiEl || !wifiBtn || !timeBtn || !tim
     wifiEl.reset();
     wifiSection.style.display = "none";
   });
-
+  
   // ⏰ Événement sur la soumission du formulaire Heure
   hourFormEl.addEventListener("submit", async (e) => {
     e.preventDefault();
     const timeData = parseInput(timeEl);
 
     if (!timeData) {
-        console.error("Données de temps invalides. Le script ne peut pas continuer.");
-        return;
+      console.error("Données de temps invalides. Le script ne peut pas continuer.");
+      return;
     }
     
     const responseData = await api.setTime(timeData);
@@ -111,12 +125,11 @@ if (!ssidEl || !passwordEL || !timeEl || !wifiEl || !wifiBtn || !timeBtn || !tim
     timeSection.style.display = "none";
   });
 }
-// --- Reste de ton code (parseInput, fetchESP, etc.) ---
 
 function parseInput(input) {
   if (!input || input.value.trim() === "") {
     console.error("Données invalides pour être parsé");
-    return null; // Retourne null pour indiquer un échec
+    return null;
   }
   const [hour, minute] = input.value.trim().split(':').map(n => parseInt(n, 10));
   return {

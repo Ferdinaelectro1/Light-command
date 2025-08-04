@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Calendrier</title>
-    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
+<body class="page-calendrier">
     <header>
         <div class="header-container">
             <h1>YOUPILIGHT</h1>
@@ -20,7 +21,7 @@
             <nav>
                 <ul>
                     <li>
-                        <a href="../index.html">
+                        <a href="/">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                                 <path d="M12 3L2 12h3v8h5v-6h4v6h5v-8h3L12 3z"/>
                             </svg>
@@ -65,36 +66,45 @@
         </aside>
         <main class="content">
             <h2>Mode calendrier</h2>
-            <label for="sorties">Sélectionnez la sortie :</label>
-            <select name="sortie" id="sorties">
-                <option value="1" selected>Sortie 1</option>
-                <option value="2">Sortie 2</option>
-            </select><br>
-            <label for="taches">Sélectionnez la tâche :</label>
-            <select name="tache" id="taches">
-                <option value="1">Tâche 1</option>
-                <option value="2">Tâche 2</option>
-            </select>
-            <form id="sortie-form">
-                <fieldset>
+            <div class="calendar-controls">
+                <div class="card">
+                    <div class="form-group">
+                        <label for="sorties">Sélectionnez la sortie :</label>
+                        <select name="sortie" id="sorties">
+                            <option value="1" selected>Sortie 1</option>
+                            <option value="2">Sortie 2</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="taches">Sélectionnez la tâche :</label>
+                        <select name="tache" id="taches">
+                            <option value="1">Tâche 1</option>
+                            <option value="2">Tâche 2</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <form id="sortie-form" class="form-card">
+                <fieldset class="form-fieldset">
                     <legend>Allumage</legend>
                     <label for="onTime">Heure -- Minute :</label>
-                    <input type="time" id="onTime" required><br>
+                    <input type="time" id="onTime" required>
                 </fieldset>
-                <fieldset>
+                <fieldset class="form-fieldset">
                     <legend>Extinction</legend>
                     <label for="offTime">Heure -- Minute : </label>
                     <input type="time" id="offTime" required>
                 </fieldset>
                 <button type="submit">Envoyer le réglage</button>
             </form>
-            <section>
+            <section class="form-card">
                 <form id="save-form">
-                    <fieldset>
+                    <fieldset class="form-fieldset">
                         <legend>Sauvegarde</legend>
-                        <label for="btn-save">
+                        <label for="btn-save" class="checkbox-label">
                             <span id="choice_state">---</span> la sauvegarde après coupure de <span id="selected-output">---</span>
                             <input type="checkbox" id="btn-save">
+                            <span class="custom-checkbox"></span>
                         </label>
                         <button type="submit" id="sendChoice">Appliquer le changement</button>
                     </fieldset>
@@ -102,7 +112,7 @@
             </section>
         </main>
     </div>
-    <script src="../js/calendrier.js"></script>
-    <script src="../js/nav.js"></script>
+    <script src="/js/calendrier.js"></script>
+    <script src="/js/nav.js"></script>
 </body>
 </html>

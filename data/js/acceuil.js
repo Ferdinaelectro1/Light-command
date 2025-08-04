@@ -59,7 +59,6 @@ function scheduleTimeUpdate() {
 }
 
 // 📆 Mise à jour de l'UI de la date
-// 📆 Mise à jour de l'UI de la date
 async function updateDateUI() {
     const dateData = await api.getDate();
 
