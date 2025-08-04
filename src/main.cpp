@@ -34,6 +34,8 @@ bool Lamp2State = false;
 bool saveLampState = false;
 volatile bool manuelCommandState1 = false;
 volatile bool manuelCommandState2 = false;
+volatile bool interruptOnPin1 = false;
+volatile bool interruptOnPin2 = false;
 
 void printTime(const Time &t)
 {
@@ -182,13 +184,14 @@ void getLampe2State(AsyncWebServerRequest *request)
 void IRAM_ATTR gestionInterruption()
 {
   manuelCommandState1 = !manuelCommandState1;
-  digitalWrite(LAMP1_PIN,manuelCommandState1);
+  interruptOnPin1 = true;
+
 }
 
 void IRAM_ATTR gestionSwitch2()
 {
     manuelCommandState2 = !manuelCommandState2;
-    digitalWrite(LAMP2_PIN,manuelCommandState2);
+    interruptOnPin2 = true;
 }
 
 void getConfig(AsyncWebServerRequest *request)
@@ -349,6 +352,30 @@ void loop()
     updateState(fourconfig.tache_2_lamp_2,t,LAMP2_PIN);
     updateTimeallTwelve(rtc,t,originTime);
     now = millis();
+  }
+  if(interruptOnPin1)
+  {
+    interruptOnPin1 = false;
+    digitalWrite(LAMP1_PIN,manuelCommandState1);
+    if(saveLampState)
+    {
+      LampStates lmpstate;
+      lmpstate.oldLamp1State = digitalRead(LAMP1_PIN);
+      lmpstate.oldLamp2State = digitalRead(LAMP2_PIN);
+      saveOldLampStateToEEPROM(lmpstate);
+    }
+  }
+  if(interruptOnPin2)
+  {
+    interruptOnPin2 = false;
+    digitalWrite(LAMP2_PIN,manuelCommandState2);
+    if(saveLampState)
+    {
+      LampStates lmpstate;
+      lmpstate.oldLamp1State = digitalRead(LAMP1_PIN);
+      lmpstate.oldLamp2State = digitalRead(LAMP2_PIN);
+      saveOldLampStateToEEPROM(lmpstate);
+    }
   }
   Lamp1State = digitalRead(LAMP1_PIN);
   Lamp2State = digitalRead(LAMP2_PIN);
