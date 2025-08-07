@@ -47,7 +47,7 @@ namespace gsm
                 Serial.println("Connexion au réseau...");
             }
             else
-              break;
+              return Time{0,0,0,false};
         }
         //lancement de la requête verss l'api
         Serial.println("Requête HTTP...");
@@ -96,5 +96,40 @@ namespace gsm
         Serial.println(date.substring(8,9));
         return now;
     }
+
+//fonction2
+Time getNetworkTime(SoftwareSerial &sim800) {
+  Time currentTime = {-1, -1, -1}; // Valeurs par défaut si erreur
+
+  sim800.println("AT+CCLK?");
+  delay(500);
+
+  String response = "";
+  while (sim800.available()) {
+    char c = sim800.read();
+    response += c;
+    Serial.println(c);
+  }
+
+  // Exemple de réponse attendue : +CCLK: "25/08/06,08:45:30+04"
+  int index = response.indexOf("\"");
+  if (index != -1) {
+    String dateTimeStr = response.substring(index + 1, response.indexOf("\"", index + 1));
+
+    // On sépare la partie temps
+    int timeSepIndex = dateTimeStr.indexOf(",");
+    if (timeSepIndex != -1) {
+      String timePart = dateTimeStr.substring(timeSepIndex + 1); // "08:45:30+04"
+      int h = timePart.substring(0, 2).toInt();
+      int m = timePart.substring(3, 5).toInt();
+      int s = timePart.substring(6, 8).toInt();
+
+      currentTime.heure = h;
+      currentTime.minute = m;
+      currentTime.seconde = s;
+    }
+  }
+    return currentTime;
+  }
 
 }//end gsm

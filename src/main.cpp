@@ -12,15 +12,15 @@
 #include "timeManager.h"
 
 #define INTERVALLE 1000
-#define LAMP1_PIN 13 //d7
+#define LAMP1_PIN 13 //d7 //gpio0
 #define SWITCH1_PIN 2 //D4
-#define LAMP2_PIN 15//d8 
+#define LAMP2_PIN 16//d8 
 #define SWITCH2_PIN 0 //D3
 
 //SCL D1
 //sda d2
 
-
+SoftwareSerial sim800(14, 12); // RX, TX (à adapter selon ton montage)
 Time originTime;
 RTC_DS3231 rtc;
 unsigned long now = 0;
@@ -90,6 +90,7 @@ void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
     }
     request->send(200, "application/json", "{\"data\" : "+configJson+"}");
     saveTimeConfigToEEPROM(fourconfig);
+    Serial.println(fourconfig.isvalide);
     Serial.println(configJson);
     Serial.println("=======================");
     PrintFourConfig(fourconfig);
@@ -300,15 +301,33 @@ void setup()
 {
   Serial.begin(115200);
 
+  sim800.begin(9600);
+  delay(1000);
+
+
+  // Active l’heure réseau
+  sim800.println("AT+CLTS=1");
+  Serial.println("Active l’heure");
+  delay(1000);
+
+  // Redémarre le module pour appliquer
+  sim800.println("AT+CFUN=1,1");
+  Serial.println("Redémarrage");
+  delay(10000); // Attendre que le module se reconnecte au réseau
+
   //INIT du module horloge
   if(!rtc.begin())
   {
     Serial.println("Impossible de trouver le module RTC");
     while (1);
   }
-
+  delay(3000);
   //charger les checks (sauvegarder état des lampes)
   save_activity = loadCheckActivitytoEEPROM();
+  Serial.print("Save activity : led 1 : ");
+  Serial.print(save_activity.checkLampe1);
+  Serial.print(" , led 2 : ");
+  Serial.print(save_activity.ckeckLampe2);
 
   //init de la lampe
   pinMode(LAMP1_PIN,OUTPUT);
@@ -325,10 +344,6 @@ void setup()
   //init du port série
   Serial.println("\n\nStarting setup...");
 
-  //Serial.print("Sortie 1 : ");
-  //Serial.print(state1);
-  //Serial.print("Sortie 2 : ");
-  //Serial.print(state2);
   // Désactiver temporairement le WiFi
   WiFi.mode(WIFI_OFF);
   delay(1000);
@@ -340,8 +355,8 @@ void setup()
     fourconfig = fcfg;
   }
   else //sinon config par défaut
-  {
-   // Serial.println("passé dans le else");
+  { 
+    Serial.println("passé dans le else");
     FourConfig default_config;
     default_config.tache_1_lamp_1 = TimeConfig{Time{19,28,0},Time{0,0,0}};
     default_config.tache_2_lamp_1 = TimeConfig{Time{0,0,0},Time{7,0,0}};
@@ -354,13 +369,12 @@ void setup()
   PrintFourConfig(fourconfig);
 
   // Récupération du temps réel actuel en ligne grâce au gsm
-  //t = gsm::getNowTime();
-  t.heure = 10;
-  t.minute = 24;
-  t.seconde = 0;
+  t = gsm::getNetworkTime(sim800);
+  if (t.heure == -1)
+     Serial.println("Erreur réseau lors de la recup de l'heure");
   t.valide = true;
 
-  Serial.println("passé défault : ");
+
   printTime(fourconfig.tache_1_lamp_1.onTime);
   printTime(fourconfig.tache_1_lamp_1.ofTime);
 
@@ -379,11 +393,11 @@ void setup()
     host_point_config = hostcfg;
   }
   else
-  {
+  { 
     //config par défaut 
     host_point_config.ssid = "youpilight_esp";
     host_point_config.password = "123456789A";
-    Serial.print("default config");
+    //Serial.print("default config");
   }
 
   // Réactiver le WiFi
@@ -486,33 +500,4 @@ void loop()
 
 
 //cette fonction doit retourner un pointeur null , jusqu'à ce que qu'elle reçoivent la chaine complète
-/* char* recupall(uint8_t index, uint8_t len, uint8_t total,uint8_t *data)
-{
-  static char *data_ptr = nullptr;
-  static bool isFinish = true;
-
-  if(data_ptr == nullptr)
-  {
-    data_ptr = new char[len];
-    memcpy(data_ptr,(char *)data,len);
-  }
-  else
-  {
-
-  }
-  if(index + len != total)
-  {
-    isFinish = false;
-    char *new_space = new char[len*2];
-    memcpy(new_space,(char *)data,len);
-    data_ptr = new_space;
-    data_ptr = (char *)data;
-  }
-  else
-  {
-    return data_ptr;
-  }
-}
- */
-
 //password : 9012345678

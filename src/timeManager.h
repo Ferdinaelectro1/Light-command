@@ -71,7 +71,7 @@ void updateState(const TimeConfig& config, const Time& currentTime,uint8_t pinTo
 
 void updateTimeallTwelve(RTC_DS3231 &rtc, const Time &nowTime,Time &originTime)
 {
-    if(nowTime - originTime > Time{12,0,0,true} || nowTime - originTime == Time{12,0,0,true})
+    if(nowTime - originTime == Time{12,0,0,true})
     {
         setupTimeToRTC(gsm::getNowTime(),rtc);
         //remettre l'origine des temps à jour
