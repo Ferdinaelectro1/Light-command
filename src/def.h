@@ -24,6 +24,14 @@ struct hostPointConfig
   bool isvalide = false;
 };
 
+//structure date
+struct date
+{
+  int annee;
+  int mois;
+  int jour;
+};
+
 //structure pour représenter le temps
 struct Time
 {
@@ -127,6 +135,7 @@ TimeConfig convertToTimeConfig(const String &str) {
 
 void PrintConfig(const TimeConfig &timeconfig,const uint8_t &numero)
 {
+  #ifdef DEBUG_MODE
   Serial.print("Tâche ");
   Serial.print(numero);
   Serial.print(" : [");
@@ -143,6 +152,7 @@ void PrintConfig(const TimeConfig &timeconfig,const uint8_t &numero)
   Serial.print(" min ");
   Serial.print(timeconfig.ofTime.seconde);
   Serial.println(" s ]");
+  #endif
 }
 
 void PrintFourConfig(const FourConfig &fourconfig)

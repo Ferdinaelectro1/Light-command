@@ -29,7 +29,7 @@ function updateButtonText(button, state) {
     if (state === null) {
         button.textContent = "---";
     } else {
-        button.textContent = state ? "OFF" : "ON";
+        button.textContent = state ? "Désactiver" : "Activer";
     }
 }
 

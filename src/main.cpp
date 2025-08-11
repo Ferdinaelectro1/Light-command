@@ -6,20 +6,19 @@
 #include <LittleFS.h>
 #include "def.h"
 #include "gsm_manager.h"
-#include "page.h"
 #include "rtc_horloge_manager.h"
 #include "save.h"
 #include "timeManager.h"
+#define DEBUG_MODE
 
 #define INTERVALLE 1000
-#define LAMP1_PIN 13 //d7 //gpio0
-#define SWITCH1_PIN 2 //D4
-#define LAMP2_PIN 16//d8 
-#define SWITCH2_PIN 0 //D3
+#define LAMP1_PIN 16 //d7 //gpio0
+#define LAMP2_PIN 13//d8 
 
 //SCL D1
 //sda d2
 
+date actuelDate = {2025,8,12};
 SoftwareSerial sim800(14, 12); // RX, TX (à adapter selon ton montage)
 Time originTime;
 RTC_DS3231 rtc;
@@ -35,11 +34,10 @@ SaveStateActivity save_activity = {false,false};
 hostPointConfig host_point_config;
 volatile bool manuelCommandState1 = false;
 volatile bool manuelCommandState2 = false;
-volatile bool interruptOnPin1 = false;
-volatile bool interruptOnPin2 = false;
 
 void printTime(const Time &t)
 {
+  #ifdef DEBUG_MODE
     Serial.print(" ");
     Serial.print(t.heure);
     Serial.print(" h ");
@@ -47,12 +45,9 @@ void printTime(const Time &t)
     Serial.print(" min ");
     Serial.print(t.seconde);
     Serial.println(" s");
+  #endif
 }
 
-void handleRoot(AsyncWebServerRequest *request)
-{
-  request->send_P(200, "text/html", code);
-}
 
 void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total,const char &which_config)
 {
@@ -89,6 +84,7 @@ void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
         break;
     }
     request->send(200, "application/json", "{\"data\" : "+configJson+"}");
+    fourconfig.isvalide = true;
     saveTimeConfigToEEPROM(fourconfig);
     Serial.println(fourconfig.isvalide);
     Serial.println(configJson);
@@ -106,7 +102,7 @@ void getTime(AsyncWebServerRequest *request)
 
 void getDate(AsyncWebServerRequest *request)
 {
-  request->send(200, "application/json", "{ \"data\" : {\"annee\":2025,\"mois\":4,\"jour\":4}}");
+  request->send(200, "application/json", "{ \"data\" : {\"annee\":"+String(actuelDate.annee)+",\"mois\":"+String(actuelDate.mois)+",\"jour\":"+String(actuelDate.jour)+"}}");
 }
 
 void commandLamp1(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
@@ -176,18 +172,6 @@ void getLampe2State(AsyncWebServerRequest *request)
   request->send(200,"text/json","{\"data\" : {\"state\": "+String(Lamp2State)+"}}");
 }
 
-void IRAM_ATTR gestionInterruption()
-{
-  manuelCommandState1 = !manuelCommandState1;
-  interruptOnPin1 = true;
-
-}
-
-void IRAM_ATTR gestionSwitch2()
-{
-    manuelCommandState2 = !manuelCommandState2;
-    interruptOnPin2 = true;
-}
 
 void setupManuallyTime(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
@@ -210,7 +194,7 @@ void setupManuallyTime(AsyncWebServerRequest *request, uint8_t *data, size_t len
   };
   String retour;
   serializeJson(doc,retour);
-  setupTimeToRTC(t,rtc);
+  setupTimeToRTC(t,rtc,actuelDate);
   request->send(200,"text/json","{\"data\" : "+retour+"}");
   Serial.println("{\"data\" : ""}");
 }
@@ -244,8 +228,8 @@ void saveOldState(AsyncWebServerRequest *request, uint8_t *data, size_t len, siz
   serializeJson(doc,retour);
   request->send(200,"text/json","{\"data\" : "+retour+"}");
   saveCheckActivitytoEEPROM(save_activity);
-  Serial.println("Lampe 1 State : ");
-  Serial.println(save_activity.checkLampe1);
+  //Serial.println("Lampe 1 State : ");
+  //Serial.println(save_activity.checkLampe1);
 }
 
 void setupHostPoint(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
@@ -297,6 +281,70 @@ void getSaveState(AsyncWebServerRequest *request,uint8_t nbr_lamp)
   }
 }
 
+void getCalendarConfigs(AsyncWebServerRequest *request)
+{
+
+   String json =   "{"
+        "\"success\": true,"
+        "\"data\": {"
+            "\"sortie-1\": {"
+                "\"tache-1\": {"
+                    "\"allumage\": {"
+                        "\"heure\": "+String(fourconfig.tache_1_lamp_1.onTime.heure)+","
+                        "\"minute\": "+String(fourconfig.tache_1_lamp_1.onTime.minute)+","
+                        "\"seconde\": "+String(fourconfig.tache_1_lamp_1.onTime.seconde)+""
+                    "},"
+                    "\"extinction\": {"
+                        "\"heure\": "+String(fourconfig.tache_1_lamp_1.ofTime.heure)+","
+                        "\"minute\": "+String(fourconfig.tache_1_lamp_1.ofTime.minute)+","
+                        "\"seconde\": "+String(fourconfig.tache_1_lamp_1.ofTime.seconde)+""
+                    "}"
+                "},"
+                "\"tache-2\": {"
+                    "\"allumage\": {"
+                        "\"heure\": "+String(fourconfig.tache_2_lamp_1.onTime.heure)+","
+                        "\"minute\": "+String(fourconfig.tache_2_lamp_1.onTime.minute)+","
+                        "\"seconde\": "+String(fourconfig.tache_2_lamp_1.onTime.seconde)+""
+                    "},"
+                    "\"extinction\": {"
+                        "\"heure\": "+String(fourconfig.tache_2_lamp_1.ofTime.heure)+","
+                        "\"minute\": "+String(fourconfig.tache_2_lamp_1.ofTime.minute)+","
+                        "\"seconde\": "+String(fourconfig.tache_2_lamp_1.ofTime.seconde)+""
+                    "}"
+                "}"
+            "},"
+            "\"sortie-2\": {"
+                "\"tache-1\": {"
+                    "\"allumage\": {"
+                        "\"heure\": "+String(fourconfig.tache_1_lamp_2.onTime.heure)+","
+                        "\"minute\": "+String(fourconfig.tache_1_lamp_2.onTime.minute)+","
+                        "\"seconde\": "+String(fourconfig.tache_1_lamp_2.onTime.seconde)+""
+                    "},"
+                    "\"extinction\": {"
+                        "\"heure\": "+String(fourconfig.tache_1_lamp_2.ofTime.heure)+","
+                        "\"minute\": "+String(fourconfig.tache_1_lamp_2.ofTime.minute)+","
+                        "\"seconde\": "+String(fourconfig.tache_1_lamp_2.ofTime.seconde)+""
+                    "}"
+                "},"
+                "\"tache-2\": {"
+                    "\"allumage\": {"
+                        "\"heure\": "+String(fourconfig.tache_2_lamp_2.onTime.heure)+","
+                        "\"minute\":  "+String(fourconfig.tache_2_lamp_2.onTime.minute)+","
+                        "\"seconde\":  "+String(fourconfig.tache_2_lamp_2.onTime.seconde)+""
+                    "},"
+                    "\"extinction\": {"
+                        "\"heure\":  "+String(fourconfig.tache_2_lamp_2.ofTime.heure)+","
+                        "\"minute\":  "+String(fourconfig.tache_2_lamp_2.ofTime.minute)+","
+                        "\"seconde\":  "+String(fourconfig.tache_2_lamp_2.ofTime.seconde)+""
+                    "}"
+                "}"
+            "}"
+        "}"
+   " }";
+
+  request->send(200,"text/json",json);
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -307,27 +355,27 @@ void setup()
 
   // Active l’heure réseau
   sim800.println("AT+CLTS=1");
-  Serial.println("Active l’heure");
+  //Serial.println("Active l’heure");
   delay(1000);
 
   // Redémarre le module pour appliquer
   sim800.println("AT+CFUN=1,1");
-  Serial.println("Redémarrage");
+ // Serial.println("Redémarrage");
   delay(10000); // Attendre que le module se reconnecte au réseau
 
   //INIT du module horloge
   if(!rtc.begin())
   {
     Serial.println("Impossible de trouver le module RTC");
-    while (1);
+    //while (1);
   }
   delay(3000);
   //charger les checks (sauvegarder état des lampes)
   save_activity = loadCheckActivitytoEEPROM();
-  Serial.print("Save activity : led 1 : ");
-  Serial.print(save_activity.checkLampe1);
+  //Serial.print("Save activity : led 1 : ");
+/*   Serial.print(save_activity.checkLampe1);
   Serial.print(" , led 2 : ");
-  Serial.print(save_activity.ckeckLampe2);
+  Serial.print(save_activity.ckeckLampe2); */
 
   //init de la lampe
   pinMode(LAMP1_PIN,OUTPUT);
@@ -338,11 +386,9 @@ void setup()
   digitalWrite(LAMP1_PIN,state1);
   digitalWrite(LAMP2_PIN,state2);
 
-  pinMode(SWITCH1_PIN, INPUT_PULLUP); 
-  pinMode(SWITCH2_PIN, INPUT_PULLUP); 
   
   //init du port série
-  Serial.println("\n\nStarting setup...");
+  //Serial.println("\n\nStarting setup...");
 
   // Désactiver temporairement le WiFi
   WiFi.mode(WIFI_OFF);
@@ -369,21 +415,21 @@ void setup()
   PrintFourConfig(fourconfig);
 
   // Récupération du temps réel actuel en ligne grâce au gsm
-  t = gsm::getNetworkTime(sim800);
+  t = gsm::getNetworkTime(sim800,actuelDate);
   if (t.heure == -1)
      Serial.println("Erreur réseau lors de la recup de l'heure");
   t.valide = true;
 
 
-  printTime(fourconfig.tache_1_lamp_1.onTime);
-  printTime(fourconfig.tache_1_lamp_1.ofTime);
+  //printTime(fourconfig.tache_1_lamp_1.onTime);
+  //printTime(fourconfig.tache_1_lamp_1.ofTime);
 
 
   //Initialisation de l'origine des temps
   originTime = t;
 
   //Réglage manuelle de l'heure du module rtc grâce à l'heure que le module gsm à récupéré en ligne
-  setupTimeToRTC(t,rtc);
+  setupTimeToRTC(t,rtc,actuelDate);
   printTime(t);
 
   //charger la configuration du point d'accès depuis la mémoire EEPROM
@@ -401,13 +447,13 @@ void setup()
   }
 
   // Réactiver le WiFi
-  Serial.println("Starting WiFi AP...");
+  //Serial.println("Starting WiFi AP...");
   WiFi.mode(WIFI_AP);
   WiFi.softAP(host_point_config.ssid, host_point_config.password,1,false);
-  Serial.println(host_point_config.ssid);
+  //Serial.println(host_point_config.ssid);
   IPAddress ip = WiFi.softAPIP();
-  Serial.print("AP IP: ");
-  Serial.println(ip);
+  //Serial.print("AP IP: ");
+  //Serial.println(ip);
 
   //Initialisation de Little FS
   if(!LittleFS.begin())
@@ -431,6 +477,7 @@ void setup()
   server.on("/getSaveState/sortie-2",HTTP_GET,[](AsyncWebServerRequest *request){getSaveState(request,2);});//
   server.on("/getTime", HTTP_GET, getTime);//
   server.on("/getDate", HTTP_GET, getDate);//
+   server.on("/getCalendarConfigs", HTTP_GET, getCalendarConfigs);//
   server.on("/sortie-1/getState",HTTP_GET,getLampe1State);//
   server.on("/sortie-2/getState",HTTP_GET,getLampe2State);//
   server.on("/sortie-1/setState", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, commandLamp1);//
@@ -453,11 +500,9 @@ void setup()
   server.on("/save/sortie-2",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL,
             [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){saveOldState(request,data,len,index,total,2);});//
   server.on("/setInfos-wifi",HTTP_POST,[](AsyncWebServerRequest *request){},NULL,setupHostPoint);//
+  
   server.begin();
 
-  //attach interrupt
-  attachInterrupt(digitalPinToInterrupt(SWITCH1_PIN), gestionInterruption, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(SWITCH2_PIN), gestionSwitch2, CHANGE);
 }
 
 void loop()
@@ -465,33 +510,12 @@ void loop()
   if(millis() - now > INTERVALLE)
   {
     printTime(t);
-    t = getHeureActuelleToRTC(rtc);
+    t = getHeureActuelleToRTC(rtc,actuelDate);
     updateState(fourconfig.tache_1_lamp_1,t,LAMP1_PIN);
     updateState(fourconfig.tache_2_lamp_1,t,LAMP1_PIN);
     updateState(fourconfig.tache_1_lamp_2,t,LAMP2_PIN);
     updateState(fourconfig.tache_2_lamp_2,t,LAMP2_PIN);
-    updateTimeallTwelve(rtc,t,originTime);
     now = millis();
-  }
-  if(interruptOnPin1)
-  {
-    interruptOnPin1 = false;
-    digitalWrite(LAMP1_PIN,manuelCommandState1);
-    LampStates lmpstate;
-    lmpstate.oldLamp1State = (save_activity.checkLampe1) ? digitalRead(LAMP1_PIN) : false;
-    lmpstate.oldLamp2State =  (save_activity.ckeckLampe2) ? digitalRead(LAMP2_PIN) : false;
-    if(save_activity.checkLampe1 || save_activity.ckeckLampe2)
-      saveOldLampStateToEEPROM(lmpstate);
-  }
-  if(interruptOnPin2)
-  {
-    interruptOnPin2 = false;
-    digitalWrite(LAMP2_PIN,manuelCommandState2);
-    LampStates lmpstate;
-    lmpstate.oldLamp1State = (save_activity.checkLampe1) ? digitalRead(LAMP1_PIN) : false;
-    lmpstate.oldLamp2State =  (save_activity.ckeckLampe2) ? digitalRead(LAMP2_PIN) : false;
-    if(save_activity.checkLampe1 || save_activity.ckeckLampe2)
-      saveOldLampStateToEEPROM(lmpstate);
   }
   Lamp1State = digitalRead(LAMP1_PIN);
   Lamp2State = digitalRead(LAMP2_PIN);
