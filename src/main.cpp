@@ -16,7 +16,7 @@
 #define LAMP2_PIN 13
 
 date actuelDate = {2025,8,12};
-SoftwareSerial sim800(14, 12); // RX, TX (à adapter selon ton montage)
+SoftwareSerial sim800(14, 12);
 Time originTime;
 RTC_DS3231 rtc;
 unsigned long now = 0;
@@ -344,48 +344,30 @@ void setup()
   delay(1000);
 
 
-  // Active l’heure réseau
   sim800.println("AT+CLTS=1");
-  //Serial.println("Active l’heure");
   delay(1000);
 
-  // Redémarre le module pour appliquer
   sim800.println("AT+CFUN=1,1");
- // Serial.println("Redémarrage");
-  delay(10000); // Attendre que le module se reconnecte au réseau
+  delay(10000);
 
-  //INIT du module horloge
   if(!rtc.begin())
   {
     Serial.println("Impossible de trouver le module RTC");
-    //while (1);
   }
   delay(3000);
-  //charger les checks (sauvegarder état des lampes)
-  save_activity = loadCheckActivitytoEEPROM();
-  //Serial.print("Save activity : led 1 : ");
-/*   Serial.print(save_activity.checkLampe1);
-  Serial.print(" , led 2 : ");
-  Serial.print(save_activity.ckeckLampe2); */
 
-  //init de la lampe
+  save_activity = loadCheckActivitytoEEPROM();
+
   pinMode(LAMP1_PIN,OUTPUT);
   pinMode(LAMP2_PIN,OUTPUT);
   bool state1 = loadOldLampesStatetoEEPROM().oldLamp1State;
   bool state2 = loadOldLampesStatetoEEPROM().oldLamp2State;
-  //charger l'état de chaque lampes depuis la mémoire eeprom
   digitalWrite(LAMP1_PIN,state1);
   digitalWrite(LAMP2_PIN,state2);
 
-  
-  //init du port série
-  //Serial.println("\n\nStarting setup...");
-
-  // Désactiver temporairement le WiFi
   WiFi.mode(WIFI_OFF);
   delay(1000);
 
-  //Chargement de la configuration si elle est dans l'eeprom
   FourConfig fcfg = loadTimeConfigsToEEPROM();
   if(fcfg.isvalide)
   {
