@@ -12,14 +12,11 @@
 #define DEBUG_MODE
 
 #define INTERVALLE 1000
-#define LAMP1_PIN 16 //d7 //gpio0
-#define LAMP2_PIN 13//d8 
-
-//SCL D1
-//sda d2
+#define LAMP1_PIN 16
+#define LAMP2_PIN 13
 
 date actuelDate = {2025,8,12};
-SoftwareSerial sim800(14, 12); // RX, TX (à adapter selon ton montage)
+SoftwareSerial sim800(14, 12);
 Time originTime;
 RTC_DS3231 rtc;
 unsigned long now = 0;
@@ -54,8 +51,6 @@ void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
   for (size_t i = 0; i < len; i++) {
     configJson += (char)data[i];
   }
-  //attendre que la lecture complète du json soit faite , parceque le buffer du EspAsycServer post est limité
-  //donc il envoie des morcaux, mais nous fournit aussi l'index du morceau actuelle dans le json complet
   if(index + len == total)
   {
     TimeConfig cfg = convertToTimeConfig(configJson);
@@ -90,8 +85,7 @@ void configSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len, size
     Serial.println(configJson);
     Serial.println("=======================");
     PrintFourConfig(fourconfig);
-    configJson.clear();//efface le configJson pour pouvoir l'utiliser pour d'autre config
-    //originTime = t; //réinitialiser l'origine des temps
+    configJson.clear();
   }
 }
 
@@ -126,7 +120,6 @@ void commandLamp1(AsyncWebServerRequest *request, uint8_t *data, size_t len, siz
   Serial.println("{\"data\" : {\"state\" : "+String(Lamp1State)+"}}");
   manuelCommandState1 = !manuelCommandState1;
   digitalWrite(LAMP1_PIN,manuelCommandState1);
-  //Mise à jour du stockage des états des lampes dans l'eeprom si le stockage est activé
   LampStates lmpstate;
   lmpstate.oldLamp1State = (save_activity.checkLampe1) ? digitalRead(LAMP1_PIN) : false;
   lmpstate.oldLamp2State =  (save_activity.ckeckLampe2) ? digitalRead(LAMP2_PIN) : false;
@@ -228,8 +221,6 @@ void saveOldState(AsyncWebServerRequest *request, uint8_t *data, size_t len, siz
   serializeJson(doc,retour);
   request->send(200,"text/json","{\"data\" : "+retour+"}");
   saveCheckActivitytoEEPROM(save_activity);
-  //Serial.println("Lampe 1 State : ");
-  //Serial.println(save_activity.checkLampe1);
 }
 
 void setupHostPoint(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
@@ -353,54 +344,36 @@ void setup()
   delay(1000);
 
 
-  // Active l’heure réseau
   sim800.println("AT+CLTS=1");
-  //Serial.println("Active l’heure");
   delay(1000);
 
-  // Redémarre le module pour appliquer
   sim800.println("AT+CFUN=1,1");
- // Serial.println("Redémarrage");
-  delay(10000); // Attendre que le module se reconnecte au réseau
+  delay(10000);
 
-  //INIT du module horloge
   if(!rtc.begin())
   {
     Serial.println("Impossible de trouver le module RTC");
-    //while (1);
   }
   delay(3000);
-  //charger les checks (sauvegarder état des lampes)
-  save_activity = loadCheckActivitytoEEPROM();
-  //Serial.print("Save activity : led 1 : ");
-/*   Serial.print(save_activity.checkLampe1);
-  Serial.print(" , led 2 : ");
-  Serial.print(save_activity.ckeckLampe2); */
 
-  //init de la lampe
+  save_activity = loadCheckActivitytoEEPROM();
+
   pinMode(LAMP1_PIN,OUTPUT);
   pinMode(LAMP2_PIN,OUTPUT);
   bool state1 = loadOldLampesStatetoEEPROM().oldLamp1State;
   bool state2 = loadOldLampesStatetoEEPROM().oldLamp2State;
-  //charger l'état de chaque lampes depuis la mémoire eeprom
   digitalWrite(LAMP1_PIN,state1);
   digitalWrite(LAMP2_PIN,state2);
 
-  
-  //init du port série
-  //Serial.println("\n\nStarting setup...");
-
-  // Désactiver temporairement le WiFi
   WiFi.mode(WIFI_OFF);
   delay(1000);
 
-  //Chargement de la configuration si elle est dans l'eeprom
   FourConfig fcfg = loadTimeConfigsToEEPROM();
   if(fcfg.isvalide)
   {
     fourconfig = fcfg;
   }
-  else //sinon config par défaut
+  else
   { 
     Serial.println("passé dans le else");
     FourConfig default_config;
@@ -411,28 +384,18 @@ void setup()
     fourconfig = default_config;
   }
 
-  //affiché la configuration stocké 
   PrintFourConfig(fourconfig);
 
-  // Récupération du temps réel actuel en ligne grâce au gsm
   t = gsm::getNetworkTime(sim800,actuelDate);
   if (t.heure == -1)
      Serial.println("Erreur réseau lors de la recup de l'heure");
   t.valide = true;
 
-
-  //printTime(fourconfig.tache_1_lamp_1.onTime);
-  //printTime(fourconfig.tache_1_lamp_1.ofTime);
-
-
-  //Initialisation de l'origine des temps
   originTime = t;
 
-  //Réglage manuelle de l'heure du module rtc grâce à l'heure que le module gsm à récupéré en ligne
   setupTimeToRTC(t,rtc,actuelDate);
   printTime(t);
 
-  //charger la configuration du point d'accès depuis la mémoire EEPROM
   hostPointConfig hostcfg = loadHostPointConfigtoEEPROM();
   if(hostcfg.isvalide)
   {
@@ -440,66 +403,56 @@ void setup()
   }
   else
   { 
-    //config par défaut 
     host_point_config.ssid = "youpilight_esp";
     host_point_config.password = "123456789A";
-    //Serial.print("default config");
   }
 
-  // Réactiver le WiFi
-  //Serial.println("Starting WiFi AP...");
   WiFi.mode(WIFI_AP);
   WiFi.softAP(host_point_config.ssid, host_point_config.password,1,false);
-  //Serial.println(host_point_config.ssid);
   IPAddress ip = WiFi.softAPIP();
-  //Serial.print("AP IP: ");
-  //Serial.println(ip);
 
-  //Initialisation de Little FS
   if(!LittleFS.begin())
   {
     Serial.println("Erreur d'initialisation de little fs");
     return;
   }
 
-  //configuration des routes du serveur et initialisation du serveur
   server.on("/",HTTP_GET, [](AsyncWebServerRequest *request){
      Serial.println("Passer dans le get");
      request->send(LittleFS, "/index.html", "text/html");
   });
 
-  //Servir les fichiesrs static 
   server.serveStatic("/css", LittleFS, "/css");
   server.serveStatic("/js", LittleFS, "/js");
   server.serveStatic("/html", LittleFS, "/html");
 
-  server.on("/getSaveState/sortie-1",HTTP_GET,[](AsyncWebServerRequest *request){getSaveState(request,1);});//
-  server.on("/getSaveState/sortie-2",HTTP_GET,[](AsyncWebServerRequest *request){getSaveState(request,2);});//
-  server.on("/getTime", HTTP_GET, getTime);//
-  server.on("/getDate", HTTP_GET, getDate);//
-   server.on("/getCalendarConfigs", HTTP_GET, getCalendarConfigs);//
-  server.on("/sortie-1/getState",HTTP_GET,getLampe1State);//
-  server.on("/sortie-2/getState",HTTP_GET,getLampe2State);//
-  server.on("/sortie-1/setState", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, commandLamp1);//
-  server.on("/sortie-2/setState", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, commandLamp2);//
+  server.on("/getSaveState/sortie-1",HTTP_GET,[](AsyncWebServerRequest *request){getSaveState(request,1);});
+  server.on("/getSaveState/sortie-2",HTTP_GET,[](AsyncWebServerRequest *request){getSaveState(request,2);});
+  server.on("/getTime", HTTP_GET, getTime);
+  server.on("/getDate", HTTP_GET, getDate);
+  server.on("/getCalendarConfigs", HTTP_GET, getCalendarConfigs);
+  server.on("/sortie-1/getState",HTTP_GET,getLampe1State);
+  server.on("/sortie-2/getState",HTTP_GET,getLampe2State);
+  server.on("/sortie-1/setState", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, commandLamp1);
+  server.on("/sortie-2/setState", HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, commandLamp2);
   server.on("/sortie-1/tache-1", HTTP_POST, 
             [](AsyncWebServerRequest *request){}, NULL, 
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'a');});//
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'a');});
   server.on("/sortie-1/tache-2", HTTP_POST, 
             [](AsyncWebServerRequest *request){}, NULL, 
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'b');});//
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'b');});
   server.on("/sortie-2/tache-1", HTTP_POST,
             [](AsyncWebServerRequest *request){}, NULL, 
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'c');});//
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'c');});
   server.on("/sortie-2/tache-2", HTTP_POST, 
             [](AsyncWebServerRequest *request){}, NULL, 
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'d');});//
-  server.on("/setTime",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, setupManuallyTime);//
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){configSetup(request,data,len,index,total,'d');});
+  server.on("/setTime",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL, setupManuallyTime);
   server.on("/save/sortie-1",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL,
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){saveOldState(request,data,len,index,total,1);});//
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){saveOldState(request,data,len,index,total,1);});
   server.on("/save/sortie-2",HTTP_POST,[](AsyncWebServerRequest *request){}, NULL,
-            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){saveOldState(request,data,len,index,total,2);});//
-  server.on("/setInfos-wifi",HTTP_POST,[](AsyncWebServerRequest *request){},NULL,setupHostPoint);//
+            [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){saveOldState(request,data,len,index,total,2);});
+  server.on("/setInfos-wifi",HTTP_POST,[](AsyncWebServerRequest *request){},NULL,setupHostPoint);
   
   server.begin();
 
@@ -521,7 +474,3 @@ void loop()
   Lamp2State = digitalRead(LAMP2_PIN);
 
 }
-
-
-//cette fonction doit retourner un pointeur null , jusqu'à ce que qu'elle reçoivent la chaine complète
-//password : 9012345678

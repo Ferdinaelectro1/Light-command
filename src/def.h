@@ -2,21 +2,18 @@
 #include <string>
 #include <ArduinoJson.h>
 
-//structure pour garder l'état passé des lampes
 struct LampStates
 {
   bool oldLamp1State = false;
   bool oldLamp2State = false;
 };
 
-//strucuture pour représenter le flag de sauvegarde de l'état de chaque lampe
 struct SaveStateActivity
 {
   bool checkLampe1 = false;
   bool ckeckLampe2 = false;
 };
 
-//Strucuture pour les infos du wifi
 struct hostPointConfig
 {
   String ssid ;
@@ -24,7 +21,6 @@ struct hostPointConfig
   bool isvalide = false;
 };
 
-//structure date
 struct date
 {
   int annee;
@@ -32,7 +28,6 @@ struct date
   int jour;
 };
 
-//structure pour représenter le temps
 struct Time
 {
     long heure;
@@ -88,7 +83,6 @@ struct Time
 } ;
 
 
-//structure pour représenter une configuration de tâche donnée (allumage , extinction)
 struct TimeConfig
 {
     Time onTime ;
@@ -96,7 +90,6 @@ struct TimeConfig
     bool isvalide = false;
 };
 
-//structure pour représenter quatre tâche (c'est pour faciliter le stockage dans la mémoire eeprom)
 struct FourConfig
 {
   TimeConfig tache_1_lamp_1;
@@ -106,7 +99,6 @@ struct FourConfig
   bool isvalide = false;
 };
 
-// Fonction qui convertit une chaîne JSON en structure TimeConfig
 TimeConfig convertToTimeConfig(const String &str) {
   StaticJsonDocument<200> doc;
   DeserializationError error = deserializeJson(doc, str);
@@ -120,12 +112,10 @@ TimeConfig convertToTimeConfig(const String &str) {
     return cfg;
   }
 
-  //alummage config
   cfg.onTime.heure   = doc["allumage"]["heure"] | 0;
   cfg.onTime.minute  = doc["allumage"]["minute"] | 0;
   cfg.onTime.seconde = doc["allumage"]["seconde"] | 0;
   
-  //extinction config
   cfg.ofTime.heure   = doc["extinction"]["heure"] | 0;
   cfg.ofTime.minute  = doc["extinction"]["minute"] | 0;
   cfg.ofTime.seconde = doc["extinction"]["seconde"] | 0;
