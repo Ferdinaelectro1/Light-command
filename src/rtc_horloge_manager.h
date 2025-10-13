@@ -5,7 +5,6 @@
 
 void setupTimeToRTC(const Time &reelTime,RTC_DS3231 &rtc,const date &date_actuelle)
 {
-  // Extraire les heures, minutes et secondes
   int heure = reelTime.heure;
   int minute = reelTime.minute;
   int seconde = reelTime.seconde;
@@ -13,7 +12,6 @@ void setupTimeToRTC(const Time &reelTime,RTC_DS3231 &rtc,const date &date_actuel
   int mois = date_actuelle.mois;
   int jour = date_actuelle.jour;
   rtc.adjust(DateTime(annee, mois, jour, heure, minute, seconde));
-  // Date fixe (exemple : 2025-07-27)
 }
 
 
