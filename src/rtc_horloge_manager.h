@@ -3,29 +3,29 @@
 #include <Wire.h>
 #include <RTClib.h>
 
-void setupTimeToRTC(const Time &reelTime,RTC_DS3231 &rtc)
+void setupTimeToRTC(const Time &reelTime,RTC_DS3231 &rtc,const date &date_actuelle)
 {
   // Extraire les heures, minutes et secondes
   int heure = reelTime.heure;
   int minute = reelTime.minute;
   int seconde = reelTime.seconde;
-  int month = reelTime.mois;
-  int year = reelTime.annee;
-  int day = reelTime.jour;
+  int annee = date_actuelle.annee + 2000;
+  int mois = date_actuelle.mois;
+  int jour = date_actuelle.jour;
+  rtc.adjust(DateTime(annee, mois, jour, heure, minute, seconde));
   // Date fixe (exemple : 2025-07-27)
-  rtc.adjust(DateTime(year,month,day, heure, minute, seconde));
 }
 
 
-Time getHeureActuelleToRTC(RTC_DS3231 &rtc) {
+Time getHeureActuelleToRTC(RTC_DS3231 &rtc,date &dt) {
     DateTime now = rtc.now();
     Time actuelle;
     actuelle.heure = now.hour();
     actuelle.minute = now.minute();
     actuelle.seconde = now.second();
-    actuelle.annee = now.year();
-    actuelle.mois = now.month();
-    actuelle.jour = now.day();
+    dt.annee = now.year();
+    dt.mois = now.month();
+    dt.jour = now.day();
     actuelle.valide = true;
     return actuelle;
 }

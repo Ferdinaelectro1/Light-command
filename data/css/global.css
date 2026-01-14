@@ -1,0 +1,316 @@
+:root {
+    /* Nouvelle palette de Couleurs Vives et Modernes */
+    --primary-color: #2c7be5; /* Un bleu vif et énergique */
+    --secondary-color: #6c757d; /* Un gris neutre pour les textes et icônes */
+    --accent-color: #ff9100; /* Une couleur d'accent pour les éléments importants (boutons, icônes) */
+    
+    --background-color: #f8f9fa; /* Arrière-plan très clair pour un look épuré */
+    --sidebar-bg-color: #ffffff; /* La barre latérale est blanche pour un contraste doux */
+    --text-color: #343a40; /* Noir-gris pour une bonne lisibilité */
+    --card-bg-color: #ffffff; /* Les cartes restent blanches */
+    
+    /* Bordures et Ombres */
+    --border-color: #e9ecef; /* Bordures très légères */
+    --shadow-color: rgba(0, 0, 0, 0.05); /* Une ombre très subtile et douce */
+    --hover-shadow-color: rgba(0, 0, 0, 0.1); /* Ombre au survol */
+    
+    /* Couleurs d'état améliorées */
+    --success-color: #28a745;
+    --error-color: #dc3545;
+    --warning-color: #ffc107;
+
+    /* Typographie */
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-size-base: 1rem;
+    --heading-font-weight: 600;
+}
+
+/* Styles généraux */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    color: var(--text-color);
+    background-color: var(--background-color);
+    line-height: 1.6;
+}
+
+/* --- Styles de typographie --- */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--heading-font-weight);
+    line-height: 1.2;
+}
+
+h1 {
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+h2 {
+    font-size: 2.2rem;
+    font-weight: 300;
+    color: var(--primary-color);
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 2.5rem;
+}
+
+/* --- Styles des éléments principaux --- */
+
+/* En-tête */
+header {
+    background-color: var(--sidebar-bg-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+/* Disposition principale */
+.page-container {
+    display: flex;
+    min-height: calc(100vh - 72px); /* 100vh - hauteur du header */
+}
+
+/* Barre latérale (menu de navigation) */
+.sidebar {
+    width: 250px;
+    background-color: var(--sidebar-bg-color);
+    border-right: 1px solid var(--border-color);
+    padding: 2rem 1rem;
+    flex-shrink: 0;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.sidebar nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar nav a {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    text-decoration: none;
+    color: var(--secondary-color);
+    border-radius: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar nav a:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: translateX(5px);
+}
+
+.sidebar nav a.active {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: var(--heading-font-weight);
+}
+
+.sidebar nav a svg {
+    margin-right: 1rem;
+}
+
+/* Contenu principal */
+.content {
+    flex-grow: 1;
+    padding: 2rem;
+}
+
+/* --- Styles des composants --- */
+.card {
+    padding: 1.5rem;
+    border-radius: 12px;
+    background-color: var(--card-bg-color);
+    box-shadow: 0 4px 12px var(--shadow-color);
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px var(--hover-shadow-color);
+}
+
+/* Nouveau style pour les boutons avec effet 3D subtil */
+button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(44, 123, 229, 0.3);
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background-color: #256bbd;
+    box-shadow: 0 6px 12px rgba(44, 123, 229, 0.4);
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(44, 123, 229, 0.3);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* --- Feedback visuel & chargement --- */
+.feedback-message {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.9rem;
+    min-height: 44px;
+    box-sizing: border-box;
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.feedback-message.visible {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.feedback-message.success {
+    background-color: #d1e7dd;
+    color: var(--success-color);
+}
+
+.feedback-message.error {
+    background-color: #f8d7da;
+    color: var(--error-color);
+}
+
+button.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.spinner {
+    width: 1.2em;
+    height: 1.2em;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* --- Menu burger et responsivité --- */
+.menu-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 1000;
+}
+
+.burger-icon,
+.burger-icon::before,
+.burger-icon::after {
+    display: block;
+    width: 28px;
+    height: 2px;
+    background-color: var(--text-color);
+    border-radius: 2px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: transform 0.3s ease, background-color 0.3s ease, top 0.3s ease, left 0.3s ease;
+}
+
+.burger-icon {
+    top: 50%;
+    transform: translateY(-50%) translateX(-50%);
+}
+
+.burger-icon::before {
+    content: '';
+    top: -8px;
+}
+
+.burger-icon::after {
+    content: '';
+    top: 8px;
+}
+
+.menu-toggle[aria-expanded="true"] .burger-icon {
+    background-color: transparent;
+}
+
+.menu-toggle[aria-expanded="true"] .burger-icon::before {
+    top: 0;
+    transform: translateX(-50%) rotate(45deg);
+}
+
+.menu-toggle[aria-expanded="true"] .burger-icon::after {
+    top: 0;
+    transform: translateX(-50%) rotate(-45deg);
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: 72px; /* Assumant une hauteur de header de 72px */
+        left: 0;
+        height: calc(100vh - 72px);
+        transform: translateX(-100%);
+        box-shadow: 2px 0 10px var(--shadow-color);
+        z-index: 999;
+    }
+    
+    .sidebar.is-open {
+        transform: translateX(0);
+    }
+    
+    .page-container {
+        padding-left: 0;
+    }
+    
+    .menu-toggle {
+        display: block;
+    }
+    
+    .content {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
