@@ -35,13 +35,25 @@ struct date
 //structure pour représenter le temps
 struct Time
 {
+    long annee = 0;
+    long mois = 0;
+    long jour = 0;
     long heure;
     long minute ;
     long seconde;    
     bool valide;
 
     bool operator<(const Time &other) const
-    { 
+    {
+        if (annee < other.annee) return 1;
+        if (annee > other.annee) return 0;
+
+        if (mois < other.mois) return 1;
+        if (mois > other.mois) return 0;
+
+        if (jour < other.jour) return 1;
+        if (jour > other.jour) return 0; 
+
         if (heure < other.heure) return 1;
         if (heure > other.heure) return 0;
 
@@ -53,7 +65,16 @@ struct Time
     }
 
     bool operator>(const Time &other) const
-    { 
+    {
+        if (annee < other.annee) return 0;
+        if (annee > other.annee) return 1;
+
+        if (mois < other.mois) return 0;
+        if (mois > other.mois) return 1;
+
+        if (jour < other.jour) return 0;
+        if (jour > other.jour) return 1; 
+
         if (heure < other.heure) return 0;
         if (heure > other.heure) return 1;
 
@@ -66,7 +87,7 @@ struct Time
 
     bool operator==(const Time &other) const
     {
-        return (heure == other.heure && minute == other.minute && seconde == other.seconde);
+        return (heure == other.heure && minute == other.minute && seconde == other.seconde && jour == other.jour && mois == other.mois && annee == other.annee);
     }
 
     Time operator-(const Time &other) const
@@ -124,11 +145,17 @@ TimeConfig convertToTimeConfig(const String &str) {
   cfg.onTime.heure   = doc["allumage"]["heure"] | 0;
   cfg.onTime.minute  = doc["allumage"]["minute"] | 0;
   cfg.onTime.seconde = doc["allumage"]["seconde"] | 0;
+  cfg.onTime.annee   = doc["allumage"]["annee"] | 0;
+  cfg.onTime.mois  = doc["allumage"]["mois"] | 0;
+  cfg.onTime.jour = doc["allumage"]["jour"] | 0;
   
   //extinction config
   cfg.ofTime.heure   = doc["extinction"]["heure"] | 0;
   cfg.ofTime.minute  = doc["extinction"]["minute"] | 0;
   cfg.ofTime.seconde = doc["extinction"]["seconde"] | 0;
+  cfg.ofTime.annee   = doc["extinction"]["annee"] | 0;
+  cfg.ofTime.mois  = doc["extinction"]["mois"] | 0;
+  cfg.ofTime.jour = doc["extinction"]["jour"] | 0;
 
   return cfg;
 }

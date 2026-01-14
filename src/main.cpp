@@ -35,6 +35,11 @@ hostPointConfig host_point_config;
 volatile bool manuelCommandState1 = false;
 volatile bool manuelCommandState2 = false;
 
+Time t2 = {10,20,30,true};
+TimeConfig config2 ;
+volatile bool LampState2 = false;
+volatile bool manuelCommandState2 = false;
+
 void printTime(const Time &t)
 {
   #ifdef DEBUG_MODE
